@@ -50,7 +50,7 @@
     .close-modal:hover{color:#000;}
     .delete-btn{background:#e74c3c;margin-top:10px;}
     .pilih-bulan{margin:15px 0;text-align:center;}
-    .pilih-bulan select{padding:10px;font-size:1em;border-radius:8px;}
+    .pilih-bulan select{padding:10px;font-size:1em;border-radius:8px;margin:0 5px;}
     @media print{.no-print{display:none;}body{background:white;}}
   </style>
 </head>
@@ -75,7 +75,7 @@
 
   <nav>
     <button onclick="show('input')">Input Data</button>
-    <button onclick="show('laporan')">Laporan Bulanan</button>
+    <button onclick="show('laporan')">Laporan</button>
     <button onclick="show('backup')">Backup & Restore</button>
   </nav>
 
@@ -97,7 +97,7 @@
     <input type="number" id="jumlah" placeholder="Jumlah (Rp)"><br><br>
     <button id="btnSimpan" onclick="simpan()">Simpan Transaksi</button>
     <button class="export-btn" onclick="exportCSV()">Export CSV</button>
-    <button class="print-btn" onclick="openPrintModal()">Cetak Laporan Bulanan</button>
+    <button class="print-btn" onclick="openPrintModal()">Cetak Laporan</button>
 
     <div class="history-box">
       <div class="history-title">History Transaksi (2 Bulan Terakhir) — Klik untuk Edit/Hapus</div>
@@ -105,23 +105,37 @@
     </div>
   </section>
 
-  <!-- LAPORAN BULANAN -->
+  <!-- LAPORAN -->
   <section id="laporan">
     <h2>LAPORAN KEUANGAN</h2>
     <h3>KOSTORY : SATRIA</h3>
-    <div class="pilih-bulan">
-      <select id="pilihBulan" onchange="hitungLaporan()"></select>
-      <select id="pilihTahun" onchange="hitungLaporan()"></select>
+    
+    <div class="pilih-bulan" style="margin:20px 0;">
+      <select id="jenisLaporan" style="padding:10px;font-size:1em;border-radius:8px;">
+        <option value="bulanan">Laporan Bulanan</option>
+        <option value="tahunan">Laporan Tahunan</option>
+      </select>
+      
+      <span id="wrapperBulan">
+        <select id="pilihBulan"></select>
+      </span>
+      
+      <select id="pilihTahun"></select>
     </div>
-    <h3>BULAN: <span id="bulanTampil"></span></h3>
+
+    <h3 id="periodeTampil" style="margin:20px 0;color:#27ae60;font-size:1.6em;"></h3>
+    
     <div id="printArea">
       <h2 style="color:#27ae60;">Pendapatan</h2>
       <table><tr><td>Sewa Kost</td><td style="text-align:right" id="totalSewa">0</td></tr>
       <tr class="total"><td>Pendapatan Bruto</td><td style="text-align:right" id="bruto">0</td></tr></table>
+      
       <h2 style="color:#27ae60;">Operasional</h2>
       <table id="detailOperasional"></table>
       <table><tr class="total"><td>Total Pengeluaran</td><td style="text-align:right" id="totalKeluar">0</td></tr></table>
+      
       <table><tr class="total"><td>Pendapatan Netto</td><td style="text-align:right" id="netto">0</td></tr></table>
+      
       <h2 style="color:#27ae60;">Sharing</h2>
       <table>
         <tr><td>Promotion (5% x Bruto)</td><td style="text-align:right" id="promotion">0</td></tr>
@@ -146,7 +160,7 @@
 <!-- Modal Edit & Print -->
 <div class="modal" id="editModal">
   <div class="modal-content">
-    <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
+    <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">x</span>
     <h3>Edit Transaksi</h3>
     <input type="date" id="editTanggal"><br><br>
     <input type="text" id="editKeterangan" placeholder="Keterangan"><br><br>
@@ -168,8 +182,8 @@
 
 <div class="modal" id="printModal">
   <div class="modal-content">
-    <span class="close-modal" onclick="document.getElementById('printModal').style.display='none'">&times;</span>
-    <h3>Pilih Bulan untuk Dicetak</h3>
+    <span class="close-modal" onclick="document.getElementById('printModal').style.display='none'">x</span>
+    <h3>Pilih Periode untuk Dicetak</h3>
     <div style="text-align:center;margin:20px 0;">
       <select id="printBulan" style="padding:10px;font-size:1em;"></select>
       <select id="printTahun" style="padding:10px;font-size:1em;"></select>
@@ -179,7 +193,7 @@
 </div>
 
 <script>
-// CONFIG FIREBASE (SUDAH BENAR)
+// CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDmVPzOk--IoScJPNMjtF1sDJGiELfpLIA",
   authDomain: "lap-satria.firebaseapp.com",
@@ -216,6 +230,7 @@ function masuk(user,role){
   loadData();
 }
 function logout(){if(confirm('Logout?')) location.reload();}
+
 function applyRoleRestrictions(){
   if(!isAdmin){
     document.getElementById('btnSimpan').classList.add('hidden');
@@ -297,31 +312,73 @@ function hapusTransaksi(){
   if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
 }
 
+// === FITUR BARU: BULANAN / TAHUNAN ===
 function isiDropdownBulanTahun(){
   const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const bulanSelect=document.getElementById('pilihBulan');
   const tahunSelect=document.getElementById('pilihTahun');
+  const jenis = document.getElementById('jenisLaporan').value;
+  
   bulanSelect.innerHTML=''; tahunSelect.innerHTML='';
+  
   const tahunList=[...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
   const sekarang=new Date();
-  tahunList.forEach(y=>{const o=document.createElement('option');o.value=y;o.text=y;if(y===sekarang.getFullYear())o.selected=true;tahunSelect.add(o);});
-  for(let i=0;i<12;i++){const o=document.createElement('option');o.value=i;o.text=bulanNama[i];if(i===sekarang.getMonth())o.selected=true;bulanSelect.add(o);}
+  
+  // Isi tahun
+  tahunList.forEach(y=>{
+    const o=document.createElement('option');o.value=y;o.text=y;
+    if(y===sekarang.getFullYear()) o.selected=true;
+    tahunSelect.add(o);
+  });
+  
+  // Bulan hanya muncul jika laporan bulanan
+  if(jenis==='bulanan'){
+    document.getElementById('wrapperBulan').style.display='inline';
+    for(let i=0;i<12;i++){
+      const o=document.createElement('option');o.value=i;o.text=bulanNama[i];
+      if(i===sekarang.getMonth()) o.selected=true;
+      bulanSelect.add(o);
+    }
+  } else {
+    document.getElementById('wrapperBulan').style.display='none';
+  }
 }
 
 function hitungLaporan(){
   isiDropdownBulanTahun();
-  const bulan=parseInt(document.getElementById('pilihBulan').value);
-  const tahun=parseInt(document.getElementById('pilihTahun').value);
-  document.getElementById('bulanTampil').innerText=document.getElementById('pilihBulan').options[bulan].text.toUpperCase()+' '+tahun;
+  
+  const jenis = document.getElementById('jenisLaporan').value;
+  const tahun = parseInt(document.getElementById('pilihTahun').value);
+  const bulan = jenis==='bulanan' ? parseInt(document.getElementById('pilihBulan').value) : null;
+  
+  const namaBulan = jenis==='bulanan' ? document.getElementById('pilihBulan').options[document.getElementById('pilihBulan').selectedIndex].text.toUpperCase() : '';
+  const title = jenis==='tahunan' ? `LAPORAN TAHUNAN ${tahun}` : `${namaBulan} ${tahun}`;
+  
+  document.getElementById('periodeTampil').innerText = title;
+  
   let sewa=0,gaji=0,opkost=0,listrik=0,lain=0;
-  data.forEach(t=>{const d=new Date(t.tanggal);if(d.getMonth()===bulan&&d.getFullYear()===tahun){
-    if(t.tipe==='sewa') sewa+=t.jumlah;
-    else{if(t.kategori==='Gaji')gaji+=t.jumlah;if(t.kategori==='Operasional Kost')opkost+=t.jumlah;if(t.kategori==='Listrik & Air')listrik+=t.jumlah;if(t.kategori==='Lain-lain')lain+=t.jumlah;}
-  }});
+  
+  data.forEach(t=>{
+    const d = new Date(t.tanggal);
+    const matchTahun = d.getFullYear()===tahun;
+    const matchBulan = bulan===null || d.getMonth()===bulan;
+    
+    if(matchTahun && matchBulan){
+      if(t.tipe==='sewa') sewa+=t.jumlah;
+      else{
+        if(t.kategori==='Gaji') gaji+=t.jumlah;
+        if(t.kategori==='Operasional Kost') opkost+=t.jumlah;
+        if(t.kategori==='Listrik & Air') listrik+=t.jumlah;
+        if(t.kategori==='Lain-lain') lain+=t.jumlah;
+      }
+    }
+  });
+  
   const keluar=gaji+opkost+listrik+lain;
   const netto=sewa-keluar;
   const promotion=sewa*0.05;
   const revenue=netto<0?0:netto*0.10;
+  
   document.getElementById('totalSewa').innerText=formatRupiah(sewa);
   document.getElementById('bruto').innerText=formatRupiah(sewa);
   document.getElementById('detailOperasional').innerHTML=`
@@ -335,6 +392,11 @@ function hitungLaporan(){
   document.getElementById('revenue').innerText=formatRupiah(revenue);
   document.getElementById('totalSharing').innerText=formatRupiah(promotion+revenue);
 }
+
+// Event listener untuk perubahan jenis laporan
+document.getElementById('jenisLaporan').addEventListener('change', hitungLaporan);
+document.getElementById('pilihBulan').addEventListener('change', hitungLaporan);
+document.getElementById('pilihTahun').addEventListener('change', hitungLaporan);
 
 function show(id){
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
@@ -391,15 +453,12 @@ function cetakLaporanBulanan(){
     body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; background: #f8fafc; color: #1e293b; }
     .container { max-width: 900px; margin: 40px auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
     .header { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 40px 30px; text-align: center; position: relative; }
-    .header::after { content: ''; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); width: 100px; height: 20px; background: white; clip-path: polygon(0 0, 100% 0, 50% 100%); }
-    h1 { font-size: 2.8em; margin: 10px 0; font-weight: 700; letter-spacing: -1px; }
-    .subtitle { font-size: 1.4em; opacity: 0.95; font-weight: 400; }
-    .periode { font-size: 1.8em; margin: 30px 0 10px; font-weight: 600; }
-    .content { padding: 50px 60px; }
+    h1 { font-size: 2.8em; margin: 10px 0; font-weight: 700; }
+    .periode { font-size: 2.2em; margin: 30px 0 40px; font-weight: 600; color:#27ae60; }
     .section-title { font-size: 1.6em; color: #27ae60; margin: 45px 0 25px; font-weight: 700; position: relative; padding-bottom: 12px; }
     .section-title::after { content: ''; position: absolute; left: 0; bottom: 0; width: 70px; height: 4px; background: #27ae60; border-radius: 2px; }
     table { width: 100%; border-collapse: collapse; margin: 20px 0; background: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
-    th { background: #27ae60; color: white; padding: 18px 15px; text-align: left; font-weight: 600; font-size: 1.05em; }
+    th { background: #27ae60; color: white; padding: 18px 15px; text-align: left; font-weight: 600; }
     td { padding: 16px 15px; border-bottom: 1px solid #e2e8f0; }
     tr:hover td { background: #f1fdf7; }
     .total { background: #f0fdf4 !important; font-weight: 700; font-size: 1.15em; color: #166534; }
@@ -408,16 +467,16 @@ function cetakLaporanBulanan(){
     .kredit { color: #dc2626; font-weight: 700; }
     .summary-box { background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 25px; border-radius: 16px; border: 2px solid #bbf7d0; margin: 30px 0; }
     .footer { text-align: center; padding: 40px 20px 20px; color: #64748b; font-size: 0.95em; margin-top: 60px; }
-    @media print { body { background: white; margin: 0; } .container { box-shadow: none; border-radius: 0; } .header::after { display: none; } }
+    @media print { body { background: white; margin: 0; } .container { box-shadow: none; border-radius: 0; } }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>KOSTORY</h1>
-      <div class="subtitle">Sistem Keuangan Kost Satria</div>
+      <div style="font-size:1.4em;opacity:0.95;">Sistem Keuangan Kost Satria</div>
     </div>
-    <div class="content">
+    <div style="padding:50px 60px;">
       <div style="text-align:center;">
         <h2 class="periode">LAPORAN KEUANGAN</h2>
         <h1 style="color:#27ae60;margin:10px 0 40px;font-size:3em;">${namaBulan.toUpperCase()} ${tahun}</h1>
@@ -482,7 +541,8 @@ function cetakLaporanBulanan(){
       </div>
     </div>
   </div>
-</body></html>`);
+</body>
+</html>`);
   win.document.close();
   win.focus();
   setTimeout(() => win.print(), 1000);
