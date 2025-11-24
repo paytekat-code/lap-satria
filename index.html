@@ -80,31 +80,33 @@
   </nav>
 
   <!-- INPUT DATA -->
-  <section id="input" class="active">
-    <h2>Input Transaksi</h2>
-    <select id="tipe">
-      <option value="sewa">Sewa Kost (Pendapatan)</option>
-      <option value="pengeluaran">Pengeluaran Harian</option>
-    </select><br><br>
-    <input type="date" id="tanggal"><br><br>
-    <input type="text" id="keterangan" placeholder="Nama / Keterangan"><br><br>
-    <select id="kategori" style="display:none;">
-      <option value="Gaji">Gaji</option>
-      <option value="Operasional Kost">Operasional Kost</option>
-      <option value="Listrik & Air">Listrik & Air</option>
-      <option value="Lain-lain">Lain-lain</option>
-    </select>
-    <input type="number" id="jumlah" placeholder="Jumlah (Rp)"><br><br>
-    <button id="btnSimpan" onclick="simpan()">Simpan Transaksi</button>
-    <button class="export-btn" onclick="exportCSV()">Export CSV</button>
-    
+  <!-- INPUT DATA -->
+<section id="input" class="active">
+  <h2>Input Transaksi</h2>
+  <select id="tipe">
+    <option value="sewa">Sewa Kost (Pendapatan)</option>
+    <option value="pengeluaran">Pengeluaran Harian</option>
+  </select><br><br>
+  <input type="date" id="tanggal"><br><br>
+  <input type="text" id="keterangan" placeholder="Nama / Keterangan"><br><br>
+  <select id="kategori" style="display:none;">
+    <option value="Gaji">Gaji</option>
+    <option value="Operasional Kost">Operasional Kost</option>
+    <option value="Listrik & Air">Listrik & Air</option>
+    <option value="Lain-lain">Lain-lain</option>
+  </select>
+  <input type="number" id="jumlah" placeholder="Jumlah (Rp)"><br><br>
+  <button id="btnSimpan" onclick="simpan()">Simpan Transaksi</button>
 
-    <div class="history-box">
-      <div class="history-title">History Transaksi (2 Bulan Terakhir) — Klik untuk Edit/Hapus</div>
-      <div id="historyList">Loading...</div>
-    </div>
-  </section>
+  <!-- Tombol Export & Cetak saya hapus dari sini biar halaman input bersih -->
+  <!-- Kalau masih mau Export CSV tinggal tambah lagi baris ini: -->
+  <!-- <button class="export-btn" onclick="exportCSV()">Export CSV</button> -->
 
+  <div class="history-box">
+    <div class="history-title">History Transaksi (2 Bulan Terakhir) — Klik untuk Edit/Hapus</div>
+    <div id="historyList">Loading...</div>
+  </div>
+</section>
   <!-- LAPORAN -->
   <section id="laporan">
     <h2>LAPORAN KEUANGAN</h2>
@@ -553,3 +555,4 @@ loadData();
 </script>
 </body>
 </html>
+
