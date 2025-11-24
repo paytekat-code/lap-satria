@@ -67,7 +67,7 @@
     <input type="password" id="loginPass" placeholder="Password">
     <button onclick="login()">MASUK</button>
     <div class="login-info">
-      <strong>Admin:</strong> admin / odading88<br>
+      <strong>Admin:</strong> admin / ramenuno20<br>
       <strong>Staff:</strong> staff / odading88
     </div>
   </div>
@@ -211,7 +211,7 @@ function formatTanggal(d){return new Date(d).toLocaleDateString('id-ID',{day:'nu
 function login(){
   const id = document.getElementById('loginId').value.trim().toLowerCase();
   const pass = document.getElementById('loginPass').value;
-  if(id==='admin' && pass==='odading88'){ isAdmin=true; masuk('admin','ADMIN'); }
+  if(id==='admin' && pass==='ramenuno20'){ isAdmin=true; masuk('admin','ADMIN'); }
   else if(id==='staff' && pass==='odading88'){ isAdmin=false; masuk('staff','STAFF'); }
   else alert('ID atau password salah!');
 }
@@ -406,5 +406,3 @@ loadData();
 </script>
 </body>
 </html>
-
-
