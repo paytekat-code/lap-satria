@@ -56,13 +56,151 @@
 </head>
 <body>
 
-<!-- [SEMUA HTML SAMA PERSIS SEPERTI YANG KAMU KIRIM] -->
-<!-- Login, Main App, Input, Laporan, Backup, Modal → TIDAK DIUBAH SAMA SEKALI -->
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-box">
+    <h2>LOGIN KOSTORY SATRIA</h2>
+    <input type="text" id="loginId" placeholder="ID (admin / staff)" autocomplete="off">
+    <input type="password" id="loginPass" placeholder="Password">
+    <button onclick="login()">MASUK</button>
+  </div>
+</div>
 
-<!-- Hanya bagian <script> yang diperbaiki di bawah ini -->
+<!-- MAIN APP -->
+<div class="container" id="mainApp">
+  <header>
+    <h1>KOSTORY - SATRIA <small style="font-size:0.6em;">| <span id="userDisplay">User</span> (<span id="roleDisplay">Role</span>)</small></h1>
+    <button style="position:absolute;top:20px;right:20px;background:#e74c3c;padding:8px 12px;" onclick="logout()">Logout</button>
+  </header>
+
+  <nav>
+    <button onclick="show('input')">Input Data</button>
+    <button onclick="show('laporan')">Laporan</button>
+    <button onclick="show('backup')">Backup & Restore</button>
+  </nav>
+
+  <!-- INPUT DATA -->
+  <section id="input" class="active">
+    <h2>Input Transaksi</h2>
+    <select id="tipe">
+      <option value="sewa">Sewa Kost (Pendapatan)</option>
+      <option value="pengeluaran">Pengeluaran Harian</option>
+    </select><br><br>
+    <input type="date" id="tanggal"><br><br>
+    <input type="text" id="keterangan" placeholder="Nama / Keterangan"><br><br>
+    <select id="kategori" style="display:none;">
+      <option value="Gaji">Gaji</option>
+      <option value="Operasional Kost">Operasional Kost</option>
+      <option value="Listrik & Air">Listrik & Air</option>
+      <option value="Lain-lain">Lain-lain</option>
+    </select>
+    <input type="number" id="jumlah" placeholder="Jumlah (Rp)"><br><br>
+    <button id="btnSimpan" onclick="simpan()">Simpan Transaksi</button>
+    <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+    <button class="print-btn" onclick="openPrintModal()">Cetak Laporan</button>
+
+    <div class="history-box">
+      <div class="history-title">History Transaksi (2 Bulan Terakhir) — Klik untuk Edit/Hapus</div>
+      <div id="historyList">Loading...</div>
+    </div>
+  </section>
+
+  <!-- LAPORAN -->
+  <section id="laporan">
+    <h2>LAPORAN KEUANGAN</h2>
+    <h3>KOSTORY : SATRIA</h3>
+    
+    <div class="pilih-bulan" style="margin:20px 0;">
+      <select id="jenisLaporan">
+        <option value="bulanan">Laporan Bulanan</option>
+        <option value="tahunan">Laporan Tahunan</option>
+      </select>
+      
+      <span id="wrapperBulan">
+        <select id="pilihBulan"></select>
+      </span>
+      
+      <select id="pilihTahun"></select>
+    </div>
+
+    <!-- Judul periode dinamis (tidak ada tulisan statis lagi) -->
+    <h3 id="periodeTampil" style="margin:20px 0;color:#27ae60;font-size:1.8em;text-align:center;"></h3>
+    
+    <div id="printArea">
+      <h2 style="color:#27ae60;">Pendapatan</h2>
+      <table>
+        <tr><td>Sewa Kost</td><td style="text-align:right" id="totalSewa">0</td></tr>
+        <tr class="total"><td>Pendapatan Bruto</td><td style="text-align:right" id="bruto">0</td></tr>
+      </table>
+      
+      <h2 style="color:#27ae60;">Operasional</h2>
+      <table id="detailOperasional"></table>
+      <table>
+        <tr class="total"><td>Total Pengeluaran</td><td style="text-align:right" id="totalKeluar">0</td></tr>
+      </table>
+      
+      <table>
+        <tr class="total"><td>Pendapatan Netto</td><td style="text-align:right" id="netto">0</td></tr>
+      </table>
+      
+      <h2 style="color:#27ae60;">Sharing</h2>
+      <table>
+        <tr><td>Promotion (5% x Bruto)</td><td style="text-align:right" id="promotion">0</td></tr>
+        <tr><td>Revenue (10% x Netto)</td><td style="text-align:right" id="revenue">0</td></tr>
+        <tr class="total"><td>Total Sharing</td><td style="text-align:right" id="totalSharing">0</td></tr>
+      </table>
+    </div>
+    <br>
+    <button onclick="window.print()" class="no-print">Cetak Langsung</button>
+  </section>
+
+  <!-- BACKUP -->
+  <section id="backup">
+    <h2>Backup & Restore Data</h2>
+    <button onclick="backupData()">Download Backup (JSON)</button><br><br>
+    <input type="file" id="restoreFile" accept=".json">
+    <button onclick="restoreData()">Restore dari File</button>
+    <p>Data tersimpan online di server Firebase!</p>
+  </section>
+</div>
+
+<!-- Modal Edit & Print -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">x</span>
+    <h3>Edit Transaksi</h3>
+    <input type="date" id="editTanggal"><br><br>
+    <input type="text" id="editKeterangan" placeholder="Keterangan"><br><br>
+    <input type="number" id="editJumlah" placeholder="Jumlah (Rp)"><br><br>
+    <select id="editTipe">
+      <option value="sewa">Sewa Kost</option>
+      <option value="pengeluaran">Pengeluaran</option>
+    </select><br><br>
+    <select id="editKategori" style="display:none;">
+      <option value="Gaji">Gaji</option>
+      <option value="Operasional Kost">Operasional Kost</option>
+      <option value="Listrik & Air">Listrik & Air</option>
+      <option value="Lain-lain">Lain-lain</option>
+    </select><br><br>
+    <button onclick="updateTransaksi()">Update</button>
+    <button class="delete-btn" onclick="hapusTransaksi()">Hapus</button>
+  </div>
+</div>
+
+<div class="modal" id="printModal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="document.getElementById('printModal').style.display='none'">x</span>
+    <h3>Pilih Periode untuk Dicetak</h3>
+    <div style="text-align:center;margin:20px 0;">
+      <select id="printBulan" style="padding:10px;font-size:1em;"></select>
+      <select id="printTahun" style="padding:10px;font-size:1em;"></select>
+    </div>
+    <button style="background:#27ae60;" onclick="cetakLaporanBulanan()">Cetak Sekarang</button>
+  </div>
+</div>
 
 <script>
-// CONFIG FIREBASE (sama)
+// CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDmVPzOk--IoScJPNMjtF1sDJGiELfpLIA",
   authDomain: "lap-satria.firebaseapp.com",
@@ -83,131 +221,339 @@ let editId = null;
 function formatRupiah(n){return n.toLocaleString('id-ID');}
 function formatTanggal(d){return new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'2-digit'});}
 
-// [semua fungsi login, simpan, history, edit, dll tetap sama]
+function login(){
+  const id = document.getElementById('loginId').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  if(id==='admin' && pass==='ramenuno20'){ isAdmin=true; masuk('admin','ADMIN'); }
+  else if(id==='staff' && pass==='odading88'){ isAdmin=false; masuk('staff','STAFF'); }
+  else alert('ID atau password salah!');
+}
+function masuk(user,role){
+  document.getElementById('userDisplay').textContent = user;
+  document.getElementById('roleDisplay').textContent = role;
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+  applyRoleRestrictions();
+  loadData();
+}
+function logout(){if(confirm('Logout?')) location.reload();}
 
-// === PERBAIKAN UTAMA: Dropdown Bulan & Tahun ===
-
-function populateDropdowns() {
-  const bulanNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  const bulanSelect = document.getElementById('pilihBulan');
-  const tahunSelect = document.getElementById('pilihTahun');
-  const jenis = document.getElementById('jenisLaporan').value;
-
-  // Kosongkan dulu
-  bulanSelect.innerHTML = '';
-  tahunSelect.innerHTML = '';
-
-  // Ambil semua tahun unik dari data
-  const tahunUnik = [...new Set(data.map(t => new Date(t.tanggal).getFullYear()))].sort((a,b) => b - a);
-  const sekarang = new Date();
-  const tahunIni = sekarang.getFullYear();
-  const bulanIni = sekarang.getMonth();
-
-  // Isi tahun (prioritas: tahun dengan data terbaru)
-  if (tahunUnik.length === 0) {
-    const opt = document.createElement('option');
-    opt.value = tahunIni; opt.textContent = tahunIni; opt.selected = true;
-    tahunSelect.appendChild(opt);
-  } else {
-    tahunUnik.forEach(y => {
-      const opt = document.createElement('option');
-      opt.value = y; opt.textContent = y;
-      if (y === tahunUnik[0]) opt.selected = true; // default ke tahun terbaru yang ada data
-      tahunSelect.appendChild(opt);
-    });
+function applyRoleRestrictions(){
+  if(!isAdmin){
+    document.getElementById('btnSimpan').classList.add('hidden');
+    document.querySelectorAll('#input input,#input select').forEach(e=>e.classList.add('readonly'));
+    document.querySelectorAll('#backup input,#backup button[onclick="restoreData()"]').forEach(e=>e.classList.add('hidden'));
+  }else{
+    document.getElementById('tanggal').valueAsDate = new Date();
   }
+  document.getElementById('tipe').onchange =()=>document.getElementById('kategori').style.display=document.getElementById('tipe').value==='pengeluaran'?'block':'none';
+  document.getElementById('editTipe').onchange =()=>document.getElementById('editKategori').style.display=document.getElementById('editTipe').value==='pengeluaran'?'block':'none';
+}
 
-  // Isi bulan jika laporan bulanan
-  if (jenis === 'bulanan') {
-    document.getElementById('wrapperBulan').style.display = 'inline';
-    const selectedTahun = parseInt(tahunSelect.value);
+function loadData(){
+  transRef.on('value',s=>{
+    data=[];
+    s.forEach(c=>{data.push({id:c.key,...c.val()});});
+    data.sort((a,b)=>new Date(b.tanggal)-new Date(a.tanggal));
+    if(document.getElementById('input').classList.contains('active')) tampilkanHistory();
+    if(document.getElementById('laporan').classList.contains('active')) hitungLaporan();
+  });
+}
 
-    // Cari bulan apa saja yang ada di tahun terpilih
-    const bulanAdaDiTahunIni = [...new Set(
-      data
-        .filter(t => new Date(t.tanggal).getFullYear() === selectedTahun)
-        .map(t => new Date(t.tanggal).getMonth())
-    )].sort((a,b) => b - a);
+function simpan(){
+  if(!isAdmin) return alert('Staff tidak bisa input!');
+  const t={
+    tanggal:document.getElementById('tanggal').value,
+    tipe:document.getElementById('tipe').value,
+    keterangan:document.getElementById('keterangan').value.trim()||'(Tanpa keterangan)',
+    kategori:document.getElementById('tipe').value==='sewa'?'Sewa Kost':document.getElementById('kategori').value,
+    jumlah:parseInt(document.getElementById('jumlah').value)||0
+  };
+  if(!t.tanggal || t.jumlah===0) return alert('Isi tanggal & jumlah!');
+  transRef.push(t).then(()=>{alert('Tersimpan!');document.getElementById('keterangan').value='';document.getElementById('jumlah').value='';});
+}
 
-    // Jika ada data di tahun itu, default ke bulan terbaru yang ada data
-    const defaultBulan = bulanAdaDiTahunIni.length > 0 ? bulanAdaDiTahunIni[0] : bulanIni;
+function tampilkanHistory(){
+  const sekarang = new Date();
+  const duaBulanLalu = new Date(sekarang.getFullYear(), sekarang.getMonth() - 1, 1);
+  const filtered = data.filter(t=>new Date(t.tanggal)>=duaBulanLalu);
+  const list=document.getElementById('historyList');
+  if(filtered.length===0){list.innerHTML='<em style="color:#777">Belum ada transaksi.</em>';return;}
+  list.innerHTML=filtered.map(t=>{
+    const onclick=isAdmin?`bukaEdit('${t.id}')`:'';
+    const cursor=isAdmin?'pointer':'default';
+    return `<div class="transaksi-item" style="cursor:${cursor}" ${onclick?'onclick="'+onclick+'"':''}>
+      <span class="${t.tipe==='sewa'?'debet':'kredit'}">${t.tipe==='sewa'?'Debet':'Kredit'}</span> | 
+      <span class="tanggal">${formatTanggal(t.tanggal)}</span> | ${t.keterangan}${t.kategori!=='Sewa Kost'?' | '+t.kategori:''} | 
+      <strong>Rp ${formatRupiah(t.jumlah)}</strong>
+    </div>`;
+  }).join('');
+}
 
-    for (let i = 0; i < 12; i++) {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = bulanNama[i];
-      if (i === defaultBulan) opt.selected = true;
-      bulanSelect.appendChild(opt);
+function bukaEdit(id){
+  if(!isAdmin) return;
+  editId=id; const t=data.find(x=>x.id===id);
+  document.getElementById('editTanggal').value=t.tanggal;
+  document.getElementById('editKeterangan').value=t.keterangan;
+  document.getElementById('editJumlah').value=t.jumlah;
+  document.getElementById('editTipe').value=t.tipe;
+  document.getElementById('editKategori').value=t.kategori||'Gaji';
+  document.getElementById('editKategori').style.display=t.tipe==='pengeluaran'?'block':'none';
+  document.getElementById('editModal').style.display='flex';
+}
+
+function updateTransaksi(){
+  if(!isAdmin||!editId) return;
+  const u={
+    tanggal:document.getElementById('editTanggal').value,
+    tipe:document.getElementById('editTipe').value,
+    keterangan:document.getElementById('editKeterangan').value.trim()||'(Tanpa keterangan)',
+    kategori:document.getElementById('editTipe').value==='sewa'?'Sewa Kost':document.getElementById('editKategori').value,
+    jumlah:parseInt(document.getElementById('editJumlah').value)||0
+  };
+  transRef.child(editId).update(u).then(()=>{document.getElementById('editModal').style.display='none';alert('Updated!');});
+}
+
+function hapusTransaksi(){
+  if(!isAdmin||!editId) return;
+  if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
+}
+
+// === LAPORAN BULANAN / TAHUNAN (SUDAH DIPERBAIKI) ===
+function isiDropdownBulanTahun(){
+  const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const bulanSelect=document.getElementById('pilihBulan');
+  const tahunSelect=document.getElementById('pilihTahun');
+  const jenis = document.getElementById('jenisLaporan').value;
+  
+  bulanSelect.innerHTML=''; tahunSelect.innerHTML='';
+  
+  const tahunList=[...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
+  const sekarang=new Date();
+  
+  tahunList.forEach(y=>{
+    const o=document.createElement('option');o.value=y;o.text=y;
+    if(y===sekarang.getFullYear()) o.selected=true;
+    tahunSelect.add(o);
+  });
+  
+  if(jenis==='bulanan'){
+    document.getElementById('wrapperBulan').style.display='inline';
+    for(let i=0;i<12;i++){
+      const o=document.createElement('option');o.value=i;o.text=bulanNama[i];
+      if(i===sekarang.getMonth()) o.selected=true;
+      bulanSelect.add(o);
     }
   } else {
-    document.getElementById('wrapperBulan').style.display = 'none';
+    document.getElementById('wrapperBulan').style.display='none';
   }
 }
 
-function hitungLaporan() {
-  populateDropdowns(); // ← ini yang bikin dropdown selalu fresh & bisa diganti
-
+function hitungLaporan(){
+  isiDropdownBulanTahun();
+  
   const jenis = document.getElementById('jenisLaporan').value;
   const tahun = parseInt(document.getElementById('pilihTahun').value);
-  const bulan = jenis === 'bulanan' ? parseInt(document.getElementById('pilihBulan').value) : null;
-
-  const namaBulan = jenis === 'bulanan' 
-    ? document.getElementById('pilihBulan').options[document.getElementById('pilihBulan').selectedIndex].text.toUpperCase() 
-    : '';
-  const judul = jenis === 'tahunan' ? `LAPORAN TAHUNAN ${tahun}` : `${namaBulan} ${tahun}`;
-  document.getElementById('periodeTampil').2innerText = judul;
-
+  const bulan = jenis==='bulanan' ? parseInt(document.getElementById('pilihBulan').value) : null;
+  
+  const namaBulan = jenis==='bulanan' ? document.getElementById('pilihBulan').options[document.getElementById('pilihBulan').selectedIndex].text.toUpperCase() : '';
+  const judulPeriode = jenis==='tahunan' ? `LAPORAN TAHUNAN ${tahun}` : `${namaBulan} ${tahun}`;
+  
+  // Tampilkan judul periode secara dinamis (tidak ada teks statis)
+  document.getElementById('periodeTampil').innerText = judulPeriode;
+  
   let sewa=0,gaji=0,opkost=0,listrik=0,lain=0;
-
-  data.forEach(t => {
+  
+  data.forEach(t=>{
     const d = new Date(t.tanggal);
-    if (d.getFullYear() !== tahun) return;
-    if (bulan !== null && d.getMonth() !== bulan) return;
-
-    if (t.tipe === 'sewa') sewa += t.jumlah;
-    else {
-      if (t.kategori === 'Gaji') gaji += t.jumlah;
-      if (t.kategori === 'Operasional Kost') opkost += t.jumlah;
-      if (t.kategori === 'Listrik & Air') listrik += t.jumlah;
-      if (t.kategori === 'Lain-lain') lain += t.jumlah;
+    const matchTahun = d.getFullYear()===tahun;
+    const matchBulan = bulan===null || d.getMonth()===bulan;
+    
+    if(matchTahun && matchBulan){
+      if(t.tipe==='sewa') sewa+=t.jumlah;
+      else{
+        if(t.kategori==='Gaji') gaji+=t.jumlah;
+        if(t.kategori==='Operasional Kost') opkost+=t.jumlah;
+        if(t.kategori==='Listrik & Air') listrik+=t.jumlah;
+        if(t.kategori==='Lain-lain') lain+=t.jumlah;
+      }
     }
   });
-
-  const keluar = gaji + opkost + listrik + lain;
-  const netto = sewa - keluar;
-  const promotion = sewa * 0.05;
-  const revenue = netto < 0 ? 0 : netto * 0.10;
-
-  document.getElementById('totalSewa').innerText = formatRupiah(sewa);
-  document.getElementById('bruto').innerText = formatRupiah(sewa);
-  document.getElementById('detailOperasional').innerHTML = `
+  
+  const keluar=gaji+opkost+listrik+lain;
+  const netto=sewa-keluar;
+  const promotion=sewa*0.05;
+  const revenue=netto<0?0:netto*0.10;
+  
+  document.getElementById('totalSewa').innerText=formatRupiah(sewa);
+  document.getElementById('bruto').innerText=formatRupiah(sewa);
+  document.getElementById('detailOperasional').innerHTML=`
     <tr><td>a. Gaji</td><td style="text-align:right">${formatRupiah(gaji)}</td></tr>
     <tr><td>b. Operasional Kost</td><td style="text-align:right">${formatRupiah(opkost)}</td></tr>
     <tr><td>c. Listrik & Air</td><td style="text-align:right">${formatRupiah(listrik)}</td></tr>
     <tr><td>d. Lain-lain</td><td style="text-align:right">${formatRupiah(lain)}</td></tr>`;
-  document.getElementById('totalKeluar').innerText = formatRupiah(keluar);
-  document.getElementById('netto').innerText = formatRupiah(netto);
-  document.getElementById('promotion').innerText = formatRupiah(promotion);
-  document.getElementById('revenue').innerText = formatRupiah(revenue);
-  document.getElementById('totalSharing').innerText = formatRupiah(promotion + revenue);
+  document.getElementById('totalKeluar').innerText=formatRupiah(keluar);
+  document.getElementById('netto').innerText=formatRupiah(netto);
+  document.getElementById('promotion').innerText=formatRupiah(promotion);
+  document.getElementById('revenue').innerText=formatRupiah(revenue);
+  document.getElementById('totalSharing').innerText=formatRupiah(promotion+revenue);
 }
 
-// Event listener (WAJIB dipanggil ulang saat ganti tahun/bulan)
-document.getElementById('jenisLaporan').addEventListener('change', () => {
-  populateDropdowns();
-  hitungLaporan();
-});
-document.getElementById('pilihTahun').addEventListener('change', hitungLaporan);
+// Event listener agar langsung update saat ganti pilihan
+document.getElementById('jenisLaporan').addEventListener('change', hitungLaporan);
 document.getElementById('pilihBulan').addEventListener('change', hitungLaporan);
+document.getElementById('pilihTahun').addEventListener('change', hitungLaporan);
 
 function show(id){
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='input') tampilkanHistory();
-  if(id==='laporan') hitungLaporan(); // ← penting banget ini dipanggil
+  if(id==='laporan') hitungLaporan();
 }
 
-// [semua fungsi lain: exportCSV, backupData, cetakLaporanBulanan, dll tetap 100% sama]
+function exportCSV(){
+  let csv="Tanggal,Tipe,Keterangan,Kategori,Jumlah\n";
+  data.forEach(t=>csv+=`${t.tanggal},${t.tipe},${t.keterangan},${t.kategori},${t.jumlah}\n`);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='kostory.csv';a.click();
+}
+
+function backupData(){
+  if(!isAdmin) return alert('Staff tidak bisa backup!');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));a.download='backup-kostory.json';a.click();
+}
+
+function restoreData(){
+  if(!isAdmin) return alert('Staff tidak bisa restore!');
+  const file=document.getElementById('restoreFile').files[0];
+  if(file){const r=new FileReader();r.onload=e=>{const arr=JSON.parse(e.target.result);
+    transRef.remove().then(()=>{arr.forEach(x=>transRef.push(x));alert('Restore selesai!');});};r.readAsText(file);}
+}
+
+function openPrintModal(){
+  const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const b=document.getElementById('printBulan'), y=document.getElementById('printTahun');
+  b.innerHTML=''; y.innerHTML='';
+  const tahunList=[...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
+  const sekarang=new Date();
+  tahunList.forEach(t=>{const o=document.createElement('option');o.value=t;o.text=t;if(t===sekarang.getFullYear())o.selected=true;y.add(o);});
+  for(let i=0;i<12;i++){const o=document.createElement('option');o.value=i;o.text=bulanNama[i];if(i===sekarang.getMonth())o.selected=true;b.add(o);}
+  document.getElementById('printModal').style.display='flex';
+}
+
+function cetakLaporanBulanan(){
+  const bulan=parseInt(document.getElementById('printBulan').value);
+  const tahun=parseInt(document.getElementById('printTahun').value);
+  const namaBulan=document.getElementById('printBulan').options[bulan].text;
+  const trans=data.filter(t=>new Date(t.tanggal).getMonth()===bulan && new Date(t.tanggal).getFullYear()===tahun).sort((a,b)=>new Date(a.tanggal)-new Date(b.tanggal));
+  let sewa=0,gaji=0,opkost=0,listrik=0,lain=0;
+  trans.forEach(t=>{if(t.tipe==='sewa')sewa+=t.jumlah;else{if(t.kategori==='Gaji')gaji+=t.jumlah;if(t.kategori==='Operasional Kost')opkost+=t.jumlah;if(t.kategori==='Listrik & Air')listrik+=t.jumlah;if(t.kategori==='Lain-lain')lain+=t.jumlah;}});
+  const keluar=gaji+opkost+listrik+lain, netto=sewa-keluar, promotion=sewa*0.05, revenue=netto<0?0:netto*0.10;
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Laporan ${namaBulan} ${tahun}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; background: #f8fafc; color: #1e293b; }
+    .container { max-width: 900px; margin: 40px auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
+    .header { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 40px 30px; text-align: center; }
+    h1 { font-size: 2.8em; margin: 10px 0; font-weight: 700; }
+    .periode { font-size: 2.5em; margin: 30px 0 40px; color:#27ae60; font-weight:600; }
+    .section-title { font-size: 1.6em; color: #27ae60; margin: 45px 0 25px; font-weight: 700; position: relative; padding-bottom: 12px; }
+    .section-title::after { content: ''; position: absolute; left: 0; bottom: 0; width: 70px; height: 4px; background: #27ae60; border-radius: 2px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; background: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
+    th { background: #27ae60; color: white; padding: 18px 15px; text-align: left; font-weight: 600; }
+    td { padding: 16px 15px; border-bottom: 1px solid #e2e8f0; }
+    tr:hover td { background: #f1fdf7; }
+    .total { background: #f0fdf4 !important; font-weight: 700; font-size: 1.15em; color: #166534; }
+    .right { text-align: right; }
+    .debet { color: #16a34a; font-weight: 700; }
+    .kredit { color: #dc2626; font-weight: 700; }
+    .summary-box { background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 25px; border-radius: 16px; border: 2px solid #bbf7d0; margin: 30px 0; }
+    .footer { text-align: center; padding: 40px 20px 20px; color: #64748b; font-size: 0.95em; margin-top: 60px; }
+    @media print { body { background: white; margin: 0; } .container { box-shadow: none; border-radius: 0; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>KOSTORY</h1>
+      <div style="font-size:1.4em;opacity:0.95;">Sistem Keuangan Kost Satria</div>
+    </div>
+    <div style="padding:50px 60px;">
+      <div style="text-align:center;">
+        <h2 class="periode">LAPORAN KEUANGAN</h2>
+        <h1 style="color:#27ae60;margin:10px 0 40px;font-size:3em;">${namaBulan.toUpperCase()} ${tahun}</h1>
+      </div>
+
+      <div class="section-title">RINGKASAN KEUANGAN</div>
+      <table>
+        <tr><td width="70%">Pendapatan Sewa Kost</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr>
+        <tr class="total"><td>Pendapatan Bruto</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr>
+      </table>
+
+      <table>
+        <tr><td>a. Gaji</td><td class="right kredit">Rp ${formatRupiah(gaji)}</td></tr>
+        <tr><td>b. Operasional Kost</td><td class="right kredit">Rp ${formatRupiah(opkost)}</td></tr>
+        <tr><td>c. Listrik & Air</td><td class="right kredit">Rp ${formatRupiah(listrik)}</td></tr>
+        <tr><td>d. Lain-lain</td><td class="right kredit">Rp ${formatRupiah(lain)}</td></tr>
+        <tr class="total"><td>Total Pengeluaran</td><td class="right kredit">Rp ${formatRupiah(keluar)}</td></tr>
+      </table>
+
+      <div class="summary-box">
+        <table style="background:transparent;box-shadow:none;">
+          <tr class="total"><td width="70%">Pendapatan Netto</td><td class="right" style="font-size:1.4em;color:#166534;">Rp ${formatRupiah(netto)}</td></tr>
+        </table>
+      </div>
+
+      <div class="section-title">SHARING BULANAN</div>
+      <table>
+        <tr><td width="70%">Promotion (5% × Bruto)</td><td class="right">Rp ${formatRupiah(promotion)}</td></tr>
+        <tr><td>Revenue (10% × Netto)</td><td class="right">Rp ${formatRupiah(revenue)}</td></tr>
+        <tr class="total"><td><strong>Total Sharing</strong></td><td class="right" style="font-size:1.3em;color:#166534;"><strong>Rp ${formatRupiah(promotion + revenue)}</strong></td></tr>
+      </table>
+
+      <div class="section-title">DETAIL TRANSAKSI</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Keterangan</th>
+            <th>Kategori</th>
+            <th class="right">Debet</th>
+            <th class="right">Kredit</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${trans.map(t => {
+            const debet = t.tipe === 'sewa' ? `Rp ${formatRupiah(t.jumlah)}` : '-';
+            const kredit = t.tipe === 'pengeluaran' ? `Rp ${formatRupiah(t.jumlah)}` : '-';
+            return `<tr>
+              <td style="font-weight:500;">${formatTanggal(t.tanggal)}</td>
+              <td>${t.keterangan}</td>
+              <td><em>${t.kategori}</em></td>
+              <td class="right ${t.tipe==='sewa'?'debet':''}">${debet}</td>
+              <td class="right ${t.tipe==='pengeluaran'?'kredit':''}">${kredit}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <div class="footer">
+        <p><strong>Dicetak pada:</strong> ${new Date().toLocaleString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'})} WIB</p>
+        <p>© 2025 KOSTORY SATRIA — Laporan Keuangan Digital</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 1000);
+  document.getElementById('printModal').style.display='none';
+}
 
 // Init
 loadData();
