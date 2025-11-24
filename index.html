@@ -79,7 +79,7 @@
     <button onclick="show('backup')">Backup & Restore</button>
   </nav>
 
-  <!-- INPUT DATA — TABEL RINGKASAN KEUANGAN SUDAH DIHAPUS -->
+  <!-- INPUT DATA -->
   <section id="input" class="active">
     <h2>Input Transaksi</h2>
     <select id="tipe">
@@ -105,7 +105,7 @@
     </div>
   </section>
 
-  <!-- LAPORAN (TIDAK DIUBAH SAMA SEKALI) -->
+  <!-- LAPORAN -->
   <section id="laporan">
     <h2>LAPORAN KEUANGAN</h2>
     <h3>KOSTORY : SATRIA</h3>
@@ -153,7 +153,7 @@
     <button onclick="window.print()" class="no-print">Cetak Langsung</button>
   </section>
 
-  <!-- BACKUP (TIDAK DIUBAH) -->
+  <!-- BACKUP & RESTORE -->
   <section id="backup">
     <h2>Backup & Restore Data</h2>
     <button onclick="backupData()">Download Backup (JSON)</button><br><br>
@@ -366,7 +366,7 @@ function hapusTransaksi(){
   if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
 }
 
-// ==================== LAPORAN (TIDAK DIUBAH) ====================
+// ==================== LAPORAN ====================
 function isiDropdownBulanTahun(){
   const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const bulanSelect=document.getElementById('pilihBulan');
