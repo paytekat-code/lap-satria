@@ -61,22 +61,19 @@
 <!-- LOGIN -->
 <div id="loginPage">
   <div class="login-box">
-    <img src="https://via.placeholder.com/150x80/27ae60/ffffff?text=KOSTORY+SATRIA" alt="Logo" style="width:140px;margin-bottom:20px;">
+    
     <h2>LOGIN KOSTORY SATRIA</h2>
     <input type="text" id="loginId" placeholder="ID (admin / staff)" autocomplete="off">
     <input type="password" id="loginPass" placeholder="Password">
     <button onclick="login()">MASUK</button>
-    <div class="login-info">
-      <strong>Admin:</strong> admin / ramenuno20<br>
-      <strong>Staff:</strong> staff / odading88
-    </div>
+    
   </div>
 </div>
 
 <!-- MAIN APP -->
 <div class="container" id="mainApp">
   <header>
-    <img src="https://via.placeholder.com/150x80/27ae60/ffffff?text=KOSTORY+SATRIA" class="logo" alt="Logo">
+    
     <h1>KOSTORY - SATRIA <small style="font-size:0.6em;">| <span id="userDisplay">User</span> (<span id="roleDisplay">Role</span>)</small></h1>
     <button style="position:absolute;top:20px;right:20px;background:#e74c3c;padding:8px 12px;" onclick="logout()">Logout</button>
   </header>
@@ -260,7 +257,7 @@ function simpan(){
 }
 
 function tampilkanHistory(){
-  const duaBulanLalu = new Date(); duaBulanLalu.setMonth(duuaBulanLalu.getMonth()-1);
+  const duaBulanLalu = new Date(); duaBulanLalu.setMonth(duaBulanLalu.getMonth()-1);
   const filtered = data.filter(t=>new Date(t.tanggal)>=duaBulanLalu);
   const list=document.getElementById('historyList');
   if(filtered.length===0){list.innerHTML='<em style="color:#777">Belum ada transaksi.</em>';return;}
