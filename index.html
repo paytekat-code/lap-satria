@@ -326,29 +326,38 @@ function isiDropdownBulanTahun(){
   const tahunSelect=document.getElementById('pilihTahun');
   const jenis = document.getElementById('jenisLaporan').value;
   
-  bulanSelect.innerHTML=''; tahunSelect.innerHTML='';
-  
-  const tahunList=[...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
-  const sekarang=new Date();
-  
-  tahunList.forEach(y=>{
-    const o=document.createElement('option');o.value=y;o.text=y;
-    if(y===sekarang.getFullYear()) o.selected=true;
-    tahunSelect.add(o);
-  });
-  
+  const sekarang = new Date();
+  const tahunSekarang = sekarang.getFullYear();
+  const bulanSekarang = sekarang.getMonth();
+
+  const tahunList = [...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
+
+  // Jangan kosongkan dulu kalau tahunnya sama (biar pilihan tetap)
+  if(tahunSelect.options.length === 0 || tahunSelect.value !== tahunSekarang.toString()){
+    tahunSelect.innerHTML = '';
+    tahunList.forEach(y=>{
+      const o=document.createElement('option');
+      o.value=y; o.text=y;
+      if(y===tahunSekarang) o.selected=true;
+      tahunSelect.add(o);
+    });
+  }
+
   if(jenis==='bulanan'){
     document.getElementById('wrapperBulan').style.display='inline';
-    for(let i=0;i<12;i++){
-      const o=document.createElement('option');o.value=i;o.text=bulanNama[i];
-      if(i===sekarang.getMonth()) o.selected=true;
-      bulanSelect.add(o);
+    if(bulanSelect.options.length === 0){
+      for(let i=0;i<12;i++){
+        const o=document.createElement('option');
+        o.value=i; o.text=bulanNama[i];
+        if(i===bulanSekarang) o.selected=true;
+        bulanSelect.add(o);
+      }
     }
+    // JANGAN set selected lagi kalau user sudah pilih bulan lain!
   } else {
     document.getElementById('wrapperBulan').style.display='none';
   }
 }
-
 function hitungLaporan(){
   isiDropdownBulanTahun();
   
@@ -560,3 +569,4 @@ loadData();
 </script>
 </body>
 </html>
+
