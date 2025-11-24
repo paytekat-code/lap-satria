@@ -28,7 +28,6 @@
     .export-btn{background:#e74c3c;}
     .print-btn{background:#d35400 !important;}
     .total{font-weight:bold;background:#f8f9fa;font-size:1.1em;}
-    .logo{max-width:150px;margin:10px auto;display:block;}
     .hidden{display:none !important;}
     .readonly{opacity:0.6;pointer-events:none;}
 
@@ -37,7 +36,6 @@
     .login-box h2{margin-bottom:30px;color:#27ae60;font-size:2em;}
     .login-box input{margin:15px 0;padding:14px;border-radius:8px;border:1px solid #ddd;font-size:1.1em;width:100%;box-sizing:border-box;}
     .login-box button{background:#27ae60;padding:14px;font-size:1.2em;width:100%;margin-top:20px;border-radius:8px;}
-    .login-info{font-size:0.9em;color:#666;margin-top:25px;line-height:1.6;}
 
     .history-box{margin-top:30px;padding:15px;background:#f8f9fa;border-radius:10px;border-left:4px solid #27ae60;}
     .history-title{font-weight:bold;margin-bottom:10px;color:#2c3e50;font-size:0.95em;}
@@ -61,19 +59,16 @@
 <!-- LOGIN -->
 <div id="loginPage">
   <div class="login-box">
-    
     <h2>LOGIN KOSTORY SATRIA</h2>
     <input type="text" id="loginId" placeholder="ID (admin / staff)" autocomplete="off">
     <input type="password" id="loginPass" placeholder="Password">
     <button onclick="login()">MASUK</button>
-    
   </div>
 </div>
 
 <!-- MAIN APP -->
 <div class="container" id="mainApp">
   <header>
-    
     <h1>KOSTORY - SATRIA <small style="font-size:0.6em;">| <span id="userDisplay">User</span> (<span id="roleDisplay">Role</span>)</small></h1>
     <button style="position:absolute;top:20px;right:20px;background:#e74c3c;padding:8px 12px;" onclick="logout()">Logout</button>
   </header>
@@ -148,10 +143,10 @@
   </section>
 </div>
 
-<!-- Modal Edit & Print (sama seperti sebelumnya) -->
+<!-- Modal Edit & Print -->
 <div class="modal" id="editModal">
   <div class="modal-content">
-    <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
+    <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">x</span>
     <h3>Edit Transaksi</h3>
     <input type="date" id="editTanggal"><br><br>
     <input type="text" id="editKeterangan" placeholder="Keterangan"><br><br>
@@ -173,7 +168,7 @@
 
 <div class="modal" id="printModal">
   <div class="modal-content">
-    <span class="close-modal" onclick="document.getElementById('printModal').style.display='none'">&times;</span>
+    <span class="close-modal" onclick="document.getElementById('printModal').style.display='none'">x</span>
     <h3>Pilih Bulan untuk Dicetak</h3>
     <div style="text-align:center;margin:20px 0;">
       <select id="printBulan" style="padding:10px;font-size:1em;"></select>
@@ -184,7 +179,7 @@
 </div>
 
 <script>
-// === CONFIG FIREBASE KAMU (SUDAH BENAR) ===
+// CONFIG FIREBASE (SUDAH BENAR)
 const firebaseConfig = {
   apiKey: "AIzaSyDmVPzOk--IoScJPNMjtF1sDJGiELfpLIA",
   authDomain: "lap-satria.firebaseapp.com",
@@ -203,7 +198,7 @@ let isAdmin = false;
 let editId = null;
 
 function formatRupiah(n){return n.toLocaleString('id-ID');}
-function formatTanggal(d){return new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'2-digit'}).replace(/\s/g,' ');}
+function formatTanggal(d){return new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'2-digit'});}
 
 function login(){
   const id = document.getElementById('loginId').value.trim().toLowerCase();
@@ -385,16 +380,64 @@ function cetakLaporanBulanan(){
   trans.forEach(t=>{if(t.tipe==='sewa')sewa+=t.jumlah;else{if(t.kategori==='Gaji')gaji+=t.jumlah;if(t.kategori==='Operasional Kost')opkost+=t.jumlah;if(t.kategori==='Listrik & Air')listrik+=t.jumlah;if(t.kategori==='Lain-lain')lain+=t.jumlah;}});
   const keluar=gaji+opkost+listrik+lain, netto=sewa-keluar, promotion=sewa*0.05, revenue=netto<0?0:netto*0.10;
   const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Laporan ${namaBulan} ${tahun}</title>
-    <style>/* desain cetak cantik sama seperti sebelumnya */</style></head><body>
-    <div style="max-width:900px;margin:40px auto;background:white;padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.1);text-align:center;">
-      <img src="https://via.placeholder.com/160x90/27ae60/ffffff?text=KOSTORY+SATRIA" style="width:160px;"><h1 style="color:#27ae60;">KOSTORY SATRIA</h1>
-      <h2>LAPORAN KEUANGAN - ${namaBulan.toUpperCase()} ${tahun}</h2>
-      <!-- isi laporan lengkap dengan tabel dan detail transaksi -->
-      <p><strong>Dicetak:</strong> ${new Date().toLocaleString('id-ID')}</p>
-    </div>
-    </body></html>`);
-  win.document.close(); win.focus(); setTimeout(()=>win.print(),1000);
+  win.document.write(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Laporan ${namaBulan} ${tahun}</title>
+<style>
+  body{font-family:Arial,sans-serif;margin:0;padding:20px;background:white;color:#333;}
+  .header{text-align:center;padding:30px;background:linear-gradient(#27ae60,#219653);color:white;border-radius:15px;margin-bottom:30px;}
+  h1{font-size:2.8em;margin:10px 0;}
+  table{width:100%;border-collapse:collapse;margin:20px 0;}
+  th{background:#27ae60;color:white;padding:15px;}
+  td{padding:12px;border:1px solid #ddd;}
+  .total{font-weight:bold;background:#f0fdf4 !important;font-size:1.2em;}
+  .right{text-align:right;}
+  .debet{color:#16a34a;font-weight:bold;}
+  .kredit{color:#dc2626;font-weight:bold;}
+  @media print{body{margin:0;}}
+</style></head><body>
+<div class="header">
+  <h1>KOSTORY SATRIA</h1>
+  <h2>LAPORAN KEUANGAN - ${namaBulan.toUpperCase()} ${tahun}</h2>
+  <p>Dicetak: ${new Date().toLocaleString('id-ID')}</p>
+</div>
+
+<h2 style="color:#27ae60;">PENDAPATAN</h2>
+<table><tr><td>Sewa Kost</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr>
+<tr class="total"><td>Pendapatan Bruto</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr></table>
+
+<h2 style="color:#27ae60;">PENGELUARAN</h2>
+<table>
+  <tr><td>a. Gaji</td><td class="right kredit">Rp ${formatRupiah(gaji)}</td></tr>
+  <tr><td>b. Operasional Kost</td><td class="right kredit">Rp ${formatRupiah(opkost)}</td></tr>
+  <tr><td>c. Listrik & Air</td><td class="right kredit">Rp ${formatRupiah(listrik)}</td></tr>
+  <tr><td>d. Lain-lain</td><td class="right kredit">Rp ${formatRupiah(lain)}</td></tr>
+  <tr class="total"><td>Total Pengeluaran</td><td class="right kredit">Rp ${formatRupiah(keluar)}</td></tr>
+</table>
+
+<h2 style="color:#27ae60;">SHARING</h2>
+<table>
+  <tr><td>Promotion (5% x Bruto)</td><td class="right">Rp ${formatRupiah(promotion)}</td></tr>
+  <tr><td>Revenue (10% x Netto)</td><td class="right">Rp ${formatRupiah(revenue)}</td></tr>
+  <tr class="total"><td><strong>Total Sharing</strong></td><td class="right" style="font-size:1.4em;color:#166534"><strong>Rp ${formatRupiah(promotion+revenue)}</strong></td></tr>
+</table>
+
+<h2 style="color:#27ae60;">DETAIL TRANSAKSI</h2>
+<table>
+  <thead><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th class="right">Debet</th><th class="right">Kredit</th></tr></thead>
+  <tbody>
+    ${trans.map(t=>`<tr>
+      <td>${formatTanggal(t.tanggal)}</td>
+      <td>${t.keterangan}</td>
+      <td>${t.kategori}</td>
+      <td class="right ${t.tipe==='sewa'?'debet':''}">${t.tipe==='sewa'? 'Rp '+formatRupiah(t.jumlah) : '-'}</td>
+      <td class="right ${t.tipe==='pengeluaran'?'kredit':''}">${t.tipe==='pengeluaran'? 'Rp '+formatRupiah(t.jumlah) : '-'}</td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 1000);
   document.getElementById('printModal').style.display='none';
 }
 
