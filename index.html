@@ -215,6 +215,7 @@ const db = firebase.database();
 const transRef = db.ref('transaksi');
 
 let data = [];
+let currentUser = '';
 let isAdmin = false;
 let editId = null;
 
@@ -230,6 +231,7 @@ function login(){
 }
 function masuk(user,role){
   document.getElementById('userDisplay').textContent = user;
+  currentUser = user;
   document.getElementById('roleDisplay').textContent = role;
   document.getElementById('loginPage').style.display='none';
   document.getElementById('mainApp').style.display='block';
@@ -240,8 +242,6 @@ function logout(){if(confirm('Logout?')) location.reload();}
 
 function applyRoleRestrictions(){
   if(!isAdmin){
-    document.getElementById('btnSimpan').classList.add('hidden');
-    document.querySelectorAll('#input input,#input select').forEach(e=>e.classList.add('readonly'));
     document.querySelectorAll('#backup input,#backup button[onclick="restoreData()"]').forEach(e=>e.classList.add('hidden'));
   }else{
     document.getElementById('tanggal').valueAsDate = new Date();
@@ -261,13 +261,17 @@ function loadData(){
 }
 
 function simpan(){
-  if(!isAdmin) return alert('Staff tidak bisa input!');
+  
   const t={
     tanggal:document.getElementById('tanggal').value,
     tipe:document.getElementById('tipe').value,
     keterangan:document.getElementById('keterangan').value.trim()||'(Tanpa keterangan)',
     kategori:document.getElementById('tipe').value==='sewa'?'Sewa Kost':document.getElementById('kategori').value,
-    jumlah:parseInt(document.getElementById('jumlah').value)||0
+    jumlah:parseInt(document.getElementById('jumlah').value)||0,
+    
+    createdBy: currentUser,
+    createdAt: new Date().toISOString(),
+
   };
   if(!t.tanggal || t.jumlah===0) return alert('Isi tanggal & jumlah!');
   transRef.push(t).then(()=>{alert('Tersimpan!');document.getElementById('keterangan').value='';document.getElementById('jumlah').value='';});
@@ -280,18 +284,19 @@ function tampilkanHistory(){
   const list=document.getElementById('historyList');
   if(filtered.length===0){list.innerHTML='<em style="color:#777">Belum ada transaksi.</em>';return;}
   list.innerHTML=filtered.map(t=>{
-    const onclick=isAdmin?`bukaEdit('${t.id}')`:'';
-    const cursor=isAdmin?'pointer':'default';
-    return `<div class="transaksi-item" style="cursor:${cursor}" ${onclick?'onclick="'+onclick+'"':''}>
+    const onclick=isAdmin?`bukaEdit('${t.id}')`:'';  // Note: Changed to allow staff, but original had isAdmin check here? Wait, original had for onclick and cursor
+    const cursor=isAdmin?'pointer':'default';  // To allow staff, change to always 'pointer' and always onclick
+    // Actually, to allow staff, remove isAdmin check for onclick and cursor
+    return `<div class="transaksi-item" style="cursor:pointer" onclick="bukaEdit('${t.id}')">
       <span class="${t.tipe==='sewa'?'debet':'kredit'}">${t.tipe==='sewa'?'Debet':'Kredit'}</span> | 
       <span class="tanggal">${formatTanggal(t.tanggal)}</span> | ${t.keterangan}${t.kategori!=='Sewa Kost'?' | '+t.kategori:''} | 
-      <strong>Rp ${formatRupiah(t.jumlah)}</strong>
+      <strong>Rp ${formatRupiah(t.jumlah)}</strong>` + (t.createdBy ? `<br>Dibuat oleh ${t.createdBy} pada ${formatTanggal(new Date(t.createdAt))}` : '') + (t.editedBy ? `<br>Diedit oleh ${t.editedBy} pada ${formatTanggal(new Date(t.editedAt))}` : '') + `
     </div>`;
   }).join('');
 }
 
 function bukaEdit(id){
-  if(!isAdmin) return;
+  
   editId=id; const t=data.find(x=>x.id===id);
   document.getElementById('editTanggal').value=t.tanggal;
   document.getElementById('editKeterangan').value=t.keterangan;
@@ -303,19 +308,23 @@ function bukaEdit(id){
 }
 
 function updateTransaksi(){
-  if(!isAdmin||!editId) return;
+  if(!editId) return;
   const u={
     tanggal:document.getElementById('editTanggal').value,
     tipe:document.getElementById('editTipe').value,
     keterangan:document.getElementById('editKeterangan').value.trim()||'(Tanpa keterangan)',
     kategori:document.getElementById('editTipe').value==='sewa'?'Sewa Kost':document.getElementById('editKategori').value,
-    jumlah:parseInt(document.getElementById('editJumlah').value)||0
+    jumlah:parseInt(document.getElementById('editJumlah').value)||0,
+    
+    editedBy: currentUser,
+    editedAt: new Date().toISOString(),
+
   };
   transRef.child(editId).update(u).then(()=>{document.getElementById('editModal').style.display='none';alert('Updated!');});
 }
 
 function hapusTransaksi(){
-  if(!isAdmin||!editId) return;
+  if(!editId) return;
   if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
 }
 
