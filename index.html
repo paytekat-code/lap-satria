@@ -79,35 +79,33 @@
     <button onclick="show('backup')">Backup & Restore</button>
   </nav>
 
-  <!-- INPUT DATA -->
-  <!-- INPUT DATA -->
-<section id="input" class="active">
-  <h2>Input Transaksi</h2>
-  <select id="tipe">
-    <option value="sewa">Sewa Kost (Pendapatan)</option>
-    <option value="pengeluaran">Pengeluaran Harian</option>
-  </select><br><br>
-  <input type="date" id="tanggal"><br><br>
-  <input type="text" id="keterangan" placeholder="Nama / Keterangan"><br><br>
-  <select id="kategori" style="display:none;">
-    <option value="Gaji">Gaji</option>
-    <option value="Operasional Kost">Operasional Kost</option>
-    <option value="Listrik & Air">Listrik & Air</option>
-    <option value="Lain-lain">Lain-lain</option>
-  </select>
-  <input type="number" id="jumlah" placeholder="Jumlah (Rp)"><br><br>
-  <button id="btnSimpan" onclick="simpan()">Simpan Transaksi</button>
+  <!-- INPUT DATA — TABEL RINGKASAN KEUANGAN SUDAH DIHAPUS -->
+  <section id="input" class="active">
+    <h2>Input Transaksi</h2>
+    <select id="tipe">
+      <option value="sewa">Sewa Kost (Pendapatan)</option>
+      <option value="pengeluaran">Pengeluaran Harian</option>
+    </select><br><br>
+    <input type="date" id="tanggal"><br><br>
+    <input type="text" id="keterangan" placeholder="Nama / Keterangan"><br><br>
+    <select id="kategori" style="display:none;">
+      <option value="Gaji">Gaji</option>
+      <option value="Operasional Kost">Operasional Kost</option>
+      <option value="Listrik & Air">Listrik & Air</option>
+      <option value="Lain-lain">Lain-lain</option>
+    </select>
+    <input type="number" id="jumlah" placeholder="Jumlah (Rp)"><br><br>
+    <button id="btnSimpan" onclick="simpan()">Simpan Transaksi</button>
+    <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+    <button class="print-btn" onclick="openPrintModal()">Cetak Laporan</button>
 
-  <!-- Tombol Export & Cetak saya hapus dari sini biar halaman input bersih -->
-  <!-- Kalau masih mau Export CSV tinggal tambah lagi baris ini: -->
-  <!-- <button class="export-btn" onclick="exportCSV()">Export CSV</button> -->
+    <div class="history-box">
+      <div class="history-title">History Transaksi (2 Bulan Terakhir) — Klik untuk Edit/Hapus</div>
+      <div id="historyList">Loading...</div>
+    </div>
+  </section>
 
-  <div class="history-box">
-    <div class="history-title">History Transaksi (2 Bulan Terakhir) — Klik untuk Edit/Hapus</div>
-    <div id="historyList">Loading...</div>
-  </div>
-</section>
-  <!-- LAPORAN -->
+  <!-- LAPORAN (TIDAK DIUBAH SAMA SEKALI) -->
   <section id="laporan">
     <h2>LAPORAN KEUANGAN</h2>
     <h3>KOSTORY : SATRIA</h3>
@@ -155,7 +153,7 @@
     <button onclick="window.print()" class="no-print">Cetak Langsung</button>
   </section>
 
-  <!-- BACKUP -->
+  <!-- BACKUP (TIDAK DIUBAH) -->
   <section id="backup">
     <h2>Backup & Restore Data</h2>
     <button onclick="backupData()">Download Backup (JSON)</button><br><br>
@@ -250,35 +248,29 @@ function logout(){if(confirm('Logout?')) location.reload();}
 function applyRoleRestrictions(){
   const isPenjaga = currentUser === 'penjaga';
 
-  // Sembunyikan tombol navigasi Laporan & Backup untuk penjaga
   document.querySelector('nav button[onclick="show(\'laporan\')"]').style.display = isPenjaga ? 'none' : 'inline-block';
   document.querySelector('nav button[onclick="show(\'backup\')"]').style.display = isPenjaga ? 'none' : 'inline-block';
 
-  // Sembunyikan seluruh section Laporan & Backup
   document.getElementById('laporan').style.display = isPenjaga ? 'none' : 'block';
   document.getElementById('backup').style.display = isPenjaga ? 'none' : 'block';
 
-  // Sembunyikan tombol cetak laporan di halaman input
   document.querySelectorAll('.print-btn, button[onclick="openPrintModal()"]').forEach(btn => {
     btn.style.display = isPenjaga ? 'none' : 'inline-block';
   });
 
-  // Backup & restore hanya admin
   if(!isAdmin){
     document.querySelectorAll('#backup input, #backup button').forEach(e => e.classList.add('hidden'));
   }
 
-  // Tanggal otomatis hari ini hanya untuk admin
   if(isAdmin){
     document.getElementById('tanggal').valueAsDate = new Date();
   }
 
-  // Kategori muncul saat pengeluaran
   document.getElementById('tipe').onchange = () => document.getElementById('kategori').style.display = document.getElementById('tipe').value==='pengeluaran'?'block':'none';
   document.getElementById('editTipe').onchange = () => document.getElementById('editKategori').style.display = document.getElementById('editTipe').value==='pengeluaran'?'block':'none';
 }
 
-// ==================== NAVIGASI DENGAN BLOKIR ====================
+// ==================== NAVIGASI ====================
 function show(id){
   if(currentUser === 'penjaga' && (id === 'laporan' || id === 'backup')){
     alert('Akses ditolak! Penjaga hanya bisa mengelola transaksi.');
@@ -291,7 +283,7 @@ function show(id){
   if(id==='laporan') hitungLaporan();
 }
 
-// ==================== FUNGSI LAIN TETAP SAMA ====================
+// ==================== DATA & HISTORY ====================
 function loadData(){
   transRef.on('value',s=>{
     data=[];
@@ -322,7 +314,6 @@ function tampilkanHistory(){
   
   let filtered = data.filter(t => new Date(t.tanggal) >= duaBulanLalu);
   
-  // BATASAN KHUSUS PENJAGA: HANYA LIHAT YANG DIBUAT SENDIRI
   if(currentUser === 'penjaga'){
     filtered = filtered.filter(t => t.createdBy === 'penjaga');
   }
@@ -343,6 +334,8 @@ function tampilkanHistory(){
     </div>`;
   }).join('');
 }
+
+// ==================== EDIT & HAPUS ====================
 function bukaEdit(id){
   editId=id; const t=data.find(x=>x.id===id);
   document.getElementById('editTanggal').value=t.tanggal;
@@ -373,7 +366,7 @@ function hapusTransaksi(){
   if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
 }
 
-// Dropdown bulan & tahun (tidak di-overwrite)
+// ==================== LAPORAN (TIDAK DIUBAH) ====================
 function isiDropdownBulanTahun(){
   const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const bulanSelect=document.getElementById('pilihBulan');
@@ -477,8 +470,9 @@ function backupData(){
 function restoreData(){
   if(!isAdmin) return alert('Hanya Admin yang bisa restore!');
   const file=document.getElementById('restoreFile').files[0];
-  if(file){const r=new FileReader();r.onload=e=>{const arr=JSON.parse(e.target.result);
-    transRef.remove().then(()=>{arr.forEach(x=>transRef.push(x));alert('Restore selesai!');});};r.readAsText(file);}
+  if(file){
+    const r=new FileReader();r.onload=e=>{const arr=JSON.parse(e.target.result);
+      transRef.remove().then(()=>{arr.forEach(x=>transRef.push(x));alert('Restore selesai!');});};r.readAsText(file);}
 }
 
 function openPrintModal(){
@@ -527,7 +521,7 @@ function cetakLaporanBulanan(){
       <div style="padding:50px 60px;">
         <div style="text-align:center;"><h2 class="periode">LAPORAN KEUANGAN</h2><h1 style="color:#27ae60;margin:10px 0 40px;font-size:3em;">${namaBulan.toUpperCase()} ${tahun}</h1></div>
         <div class="section-title">RINGKASAN KEUANGAN</div>
-        <table><tr><td width="70%">Pendapatan Sewa Kost</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr><tr class="total"><td>Pendapatan Bruto</td><td class="right debet">Rp ${formatR | formatRupiah(sewa)}</td></tr></table>
+        <table><tr><td width="70%">Pendapatan Sewa Kost</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr><tr class="total"><td>Pendapatan Bruto</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr></table>
         <table><tr><td>a. Gaji</td><td class="right kredit">Rp ${formatRupiah(gaji)}</td></tr><tr><td>b. Operasional Kost</td><td class="right kredit">Rp ${formatRupiah(opkost)}</td></tr><tr><td>c. Listrik & Air</td><td class="right kredit">Rp ${formatRupiah(listrik)}</td></tr><tr><td>d. Lain-lain</td><td class="right kredit">Rp ${formatRupiah(lain)}</td></tr><tr class="total"><td>Total Pengeluaran</td><td class="right kredit">Rp ${formatRupiah(keluar)}</td></tr></table>
         <div class="summary-box"><table style="background:transparent;box-shadow:none;"><tr class="total"><td width="70%">Pendapatan Netto</td><td class="right" style="font-size:1.4em;color:#166534;">Rp ${formatRupiah(netto)}</td></tr></table></div>
         <div class="section-title">SHARING BULANAN</div>
@@ -555,4 +549,3 @@ loadData();
 </script>
 </body>
 </html>
-
