@@ -60,7 +60,7 @@
 <div id="loginPage">
   <div class="login-box">
     <h2>LOGIN KOSTORY SATRIA</h2>
-    <input type="text" id="loginId" placeholder="ID (admin / staff)" autocomplete="off">
+    <input type="text" id="loginId" placeholder="ID (admin / staff / penjaga)" autocomplete="off">
     <input type="password" id="loginPass" placeholder="Password">
     <button onclick="login()">MASUK</button>
   </div>
@@ -69,7 +69,7 @@
 <!-- MAIN APP -->
 <div class="container" id="mainApp">
   <header>
-    <h1>KOSTORY - SATRIA <small style="font-size:0.6em;">| <span id="userDisplay">User</span> (<span id="roleDisplay">Role</span>)</small></small></h1>
+    <h1>KOSTORY - SATRIA <small style="font-size:0.6em;">| <span id="userDisplay">User</span> (<span id="roleDisplay">Role</span>)</small></h1>
     <button style="position:absolute;top:20px;right:20px;background:#e74c3c;padding:8px 12px;" onclick="logout()">Logout</button>
   </header>
 
@@ -123,7 +123,6 @@
       <select id="pilihTahun"></select>
     </div>
 
-    <!-- Judul periode dinamis -->
     <h3 id="periodeTampil" style="margin:20px 0;color:#27ae60;font-size:1.8em;text-align:center;"></h3>
     
     <div id="printArea">
@@ -167,7 +166,7 @@
 <!-- Modal Edit & Print -->
 <div class="modal" id="editModal">
   <div class="modal-content">
-    <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">×</span>
+    <span class="close-modal" onclick="document.getElementById('editModal').style.display='none'">x</span>
     <h3>Edit Transaksi</h3>
     <input type="date" id="editTanggal"><br><br>
     <input type="text" id="editKeterangan" placeholder="Keterangan"><br><br>
@@ -189,7 +188,7 @@
 
 <div class="modal" id="printModal">
   <div class="modal-content">
-    <span class="close-modal" onclick="document.getElementById('printModal').style.display='none'">×</span>
+    <span class="close-modal" onclick="document.getElementById('printModal').style.display='none'">x</span>
     <h3>Pilih Periode untuk Dicetak</h3>
     <div style="text-align:center;margin:20px 0;">
       <select id="printBulan" style="padding:10px;font-size:1em;"></select>
@@ -222,15 +221,19 @@ let editId = null;
 function formatRupiah(n){return n.toLocaleString('id-ID');}
 function formatTanggal(d){return new Date(d).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'2-digit'});}
 
+// ==================== LOGIN ====================
 function login(){
   const id = document.getElementById('loginId').value.trim().toLowerCase();
   const pass = document.getElementById('loginPass').value;
+  
   if(id==='admin' && pass==='ramenuno20'){ isAdmin=true; masuk('admin','ADMIN'); }
   else if(id==='staff' && pass==='odading88'){ isAdmin=false; masuk('staff','STAFF'); }
-  else alert('ID atau password salah!');
+  else if(id==='penjaga' && pass==='mijawa7'){ isAdmin=false; masuk('penjaga','PENJAGA'); }
+  else { alert('ID atau password salah!'); }
 }
+
 function masuk(user,role){
-  document.getElementById('userDisplay').textContent = user;
+  document.getElementById('userDisplay').textContent = user.toUpperCase();
   currentUser = user;
   document.getElementById('roleDisplay').textContent = role;
   document.getElementById('loginPage').style.display='none';
@@ -238,18 +241,55 @@ function masuk(user,role){
   applyRoleRestrictions();
   loadData();
 }
+
 function logout(){if(confirm('Logout?')) location.reload();}
 
+// ==================== HAK AKSES ====================
 function applyRoleRestrictions(){
+  const isPenjaga = currentUser === 'penjaga';
+
+  // Sembunyikan tombol navigasi Laporan & Backup untuk penjaga
+  document.querySelector('nav button[onclick="show(\'laporan\')"]').style.display = isPenjaga ? 'none' : 'inline-block';
+  document.querySelector('nav button[onclick="show(\'backup\')"]').style.display = isPenjaga ? 'none' : 'inline-block';
+
+  // Sembunyikan seluruh section Laporan & Backup
+  document.getElementById('laporan').style.display = isPenjaga ? 'none' : 'block';
+  document.getElementById('backup').style.display = isPenjaga ? 'none' : 'block';
+
+  // Sembunyikan tombol cetak laporan di halaman input
+  document.querySelectorAll('.print-btn, button[onclick="openPrintModal()"]').forEach(btn => {
+    btn.style.display = isPenjaga ? 'none' : 'inline-block';
+  });
+
+  // Backup & restore hanya admin
   if(!isAdmin){
-    document.querySelectorAll('#backup input,#backup button[onclick="restoreData()"]').forEach(e=>e.classList.add('hidden'));
-  }else{
+    document.querySelectorAll('#backup input, #backup button').forEach(e => e.classList.add('hidden'));
+  }
+
+  // Tanggal otomatis hari ini hanya untuk admin
+  if(isAdmin){
     document.getElementById('tanggal').valueAsDate = new Date();
   }
-  document.getElementById('tipe').onchange =()=>document.getElementById('kategori').style.display=document.getElementById('tipe').value==='pengeluaran'?'block':'none';
-  document.getElementById('editTipe').onchange =()=>document.getElementById('editKategori').style.display=document.getElementById('editTipe').value==='pengeluaran'?'block':'none';
+
+  // Kategori muncul saat pengeluaran
+  document.getElementById('tipe').onchange = () => document.getElementById('kategori').style.display = document.getElementById('tipe').value==='pengeluaran'?'block':'none';
+  document.getElementById('editTipe').onchange = () => document.getElementById('editKategori').style.display = document.getElementById('editTipe').value==='pengeluaran'?'block':'none';
 }
 
+// ==================== NAVIGASI DENGAN BLOKIR ====================
+function show(id){
+  if(currentUser === 'penjaga' && (id === 'laporan' || id === 'backup')){
+    alert('Akses ditolak! Penjaga hanya bisa mengelola transaksi.');
+    return;
+  }
+
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='input') tampilkanHistory();
+  if(id==='laporan') hitungLaporan();
+}
+
+// ==================== FUNGSI LAIN TETAP SAMA ====================
 function loadData(){
   transRef.on('value',s=>{
     data=[];
@@ -261,17 +301,14 @@ function loadData(){
 }
 
 function simpan(){
-  
   const t={
     tanggal:document.getElementById('tanggal').value,
     tipe:document.getElementById('tipe').value,
     keterangan:document.getElementById('keterangan').value.trim()||'(Tanpa keterangan)',
     kategori:document.getElementById('tipe').value==='sewa'?'Sewa Kost':document.getElementById('kategori').value,
     jumlah:parseInt(document.getElementById('jumlah').value)||0,
-    
     createdBy: currentUser,
     createdAt: new Date().toISOString(),
-
   };
   if(!t.tanggal || t.jumlah===0) return alert('Isi tanggal & jumlah!');
   transRef.push(t).then(()=>{alert('Tersimpan!');document.getElementById('keterangan').value='';document.getElementById('jumlah').value='';});
@@ -284,19 +321,17 @@ function tampilkanHistory(){
   const list=document.getElementById('historyList');
   if(filtered.length===0){list.innerHTML='<em style="color:#777">Belum ada transaksi.</em>';return;}
   list.innerHTML=filtered.map(t=>{
-    const onclick=isAdmin?`bukaEdit('${t.id}')`:'';  // Note: Changed to allow staff, but original had isAdmin check here? Wait, original had for onclick and cursor
-    const cursor=isAdmin?'pointer':'default';  // To allow staff, change to always 'pointer' and always onclick
-    // Actually, to allow staff, remove isAdmin check for onclick and cursor
     return `<div class="transaksi-item" style="cursor:pointer" onclick="bukaEdit('${t.id}')">
       <span class="${t.tipe==='sewa'?'debet':'kredit'}">${t.tipe==='sewa'?'Debet':'Kredit'}</span> | 
       <span class="tanggal">${formatTanggal(t.tanggal)}</span> | ${t.keterangan}${t.kategori!=='Sewa Kost'?' | '+t.kategori:''} | 
-      <strong>Rp ${formatRupiah(t.jumlah)}</strong>` + (t.createdBy ? `<br>Dibuat oleh ${t.createdBy} pada ${formatTanggal(new Date(t.createdAt))}` : '') + (t.editedBy ? `<br>Diedit oleh ${t.editedBy} pada ${formatTanggal(new Date(t.editedAt))}` : '') + `
+      <strong>Rp ${formatRupiah(t.jumlah)}</strong>` + 
+      (t.createdBy ? `<br>Dibuat oleh ${t.createdBy} pada ${formatTanggal(new Date(t.createdAt))}` : '') + 
+      (t.editedBy ? `<br>Diedit oleh ${t.editedBy} pada ${formatTanggal(new Date(t.editedAt))}` : '') + `
     </div>`;
   }).join('');
 }
 
 function bukaEdit(id){
-  
   editId=id; const t=data.find(x=>x.id===id);
   document.getElementById('editTanggal').value=t.tanggal;
   document.getElementById('editKeterangan').value=t.keterangan;
@@ -315,10 +350,8 @@ function updateTransaksi(){
     keterangan:document.getElementById('editKeterangan').value.trim()||'(Tanpa keterangan)',
     kategori:document.getElementById('editTipe').value==='sewa'?'Sewa Kost':document.getElementById('editKategori').value,
     jumlah:parseInt(document.getElementById('editJumlah').value)||0,
-    
     editedBy: currentUser,
     editedAt: new Date().toISOString(),
-
   };
   transRef.child(editId).update(u).then(()=>{document.getElementById('editModal').style.display='none';alert('Updated!');});
 }
@@ -328,7 +361,7 @@ function hapusTransaksi(){
   if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
 }
 
-// PERBAIKAN UTAMA: Dropdown bulan TIDAK LAGI DI-OVERWRITE SETIAP KALI
+// Dropdown bulan & tahun (tidak di-overwrite)
 function isiDropdownBulanTahun(){
   const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const bulanSelect=document.getElementById('pilihBulan');
@@ -341,7 +374,6 @@ function isiDropdownBulanTahun(){
 
   const tahunList = [...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
 
-  // Isi dropdown TAHUN hanya sekali
   if(tahunSelect.options.length === 0){
     tahunSelect.innerHTML = '';
     tahunList.forEach(y=>{
@@ -354,7 +386,6 @@ function isiDropdownBulanTahun(){
 
   if(jenis==='bulanan'){
     document.getElementById('wrapperBulan').style.display='inline';
-    // Isi dropdown BULAN hanya sekali
     if(bulanSelect.options.length === 0){
       for(let i=0;i<12;i++){
         const o=document.createElement('option');
@@ -370,7 +401,6 @@ function isiDropdownBulanTahun(){
 
 function hitungLaporan(){
   isiDropdownBulanTahun();
-  
   const jenis = document.getElementById('jenisLaporan').value;
   const tahun = parseInt(document.getElementById('pilihTahun').value);
   const bulan = jenis==='bulanan' ? parseInt(document.getElementById('pilihBulan').value) : null;
@@ -415,24 +445,11 @@ function hitungLaporan(){
   document.getElementById('promotion').innerText=formatRupiah(promotion);
   document.getElementById('revenue').innerText=formatRupiah(revenue);
   document.getElementById('totalSharing').innerText=formatRupiah(promotion+revenue);
-
-  // PENTING: JANGAN overwrite pilihan user lagi!
-  document.getElementById('jenisLaporan').value = jenis;
-  document.getElementById('pilihTahun').value = tahun;
-  if(jenis==='bulanan') document.getElementById('pilihBulan').value = bulan;
 }
 
-// Event listener
 document.getElementById('jenisLaporan').addEventListener('change', hitungLaporan);
 document.getElementById('pilihBulan').addEventListener('change', hitungLaporan);
 document.getElementById('pilihTahun').addEventListener('change', hitungLaporan);
-
-function show(id){
-  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  if(id==='input') tampilkanHistory();
-  if(id==='laporan') hitungLaporan();
-}
 
 function exportCSV(){
   let csv="Tanggal,Tipe,Keterangan,Kategori,Jumlah\n";
@@ -441,12 +458,12 @@ function exportCSV(){
 }
 
 function backupData(){
-  if(!isAdmin) return alert('Staff tidak bisa backup!');
+  if(!isAdmin) return alert('Hanya Admin yang bisa backup!');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));a.download='backup-kostory.json';a.click();
 }
 
 function restoreData(){
-  if(!isAdmin) return alert('Staff tidak bisa restore!');
+  if(!isAdmin) return alert('Hanya Admin yang bisa restore!');
   const file=document.getElementById('restoreFile').files[0];
   if(file){const r=new FileReader();r.onload=e=>{const arr=JSON.parse(e.target.result);
     transRef.remove().then(()=>{arr.forEach(x=>transRef.push(x));alert('Restore selesai!');});};r.readAsText(file);}
@@ -472,12 +489,7 @@ function cetakLaporanBulanan(){
   trans.forEach(t=>{if(t.tipe==='sewa')sewa+=t.jumlah;else{if(t.kategori==='Gaji')gaji+=t.jumlah;if(t.kategori==='Operasional Kost')opkost+=t.jumlah;if(t.kategori==='Listrik & Air')listrik+=t.jumlah;if(t.kategori==='Lain-lain')lain+=t.jumlah;}});
   const keluar=gaji+opkost+listrik+lain, netto=sewa-keluar, promotion=sewa*0.05, revenue=netto<0?0:netto*0.10;
   const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="utf-8">
-  <title>Laporan ${namaBulan} ${tahun}</title>
-  <style>
+  win.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Laporan ${namaBulan} ${tahun}</title><style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; background: #f8fafc; color: #1e293b; }
     .container { max-width: 900px; margin: 40px auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
@@ -497,81 +509,29 @@ function cetakLaporanBulanan(){
     .summary-box { background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 25px; border-radius: 16px; border: 2px solid #bbf7d0; margin: 30px 0; }
     .footer { text-align: center; padding: 40px 20px 20px; color: #64748b; font-size: 0.95em; margin-top: 60px; }
     @media print { body { background: white; margin: 0; } .container { box-shadow: none; border-radius: 0; } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>KOSTORY</h1>
-      <div style="font-size:1.4em;opacity:0.95;">Sistem Keuangan Kost Satria</div>
-    </div>
-    <div style="padding:50px 60px;">
-      <div style="text-align:center;">
-        <h2 class="periode">LAPORAN KEUANGAN</h2>
-        <h1 style="color:#27ae60;margin:10px 0 40px;font-size:3em;">${namaBulan.toUpperCase()} ${tahun}</h1>
-      </div>
-
-      <div class="section-title">RINGKASAN KEUANGAN</div>
-      <table>
-        <tr><td width="70%">Pendapatan Sewa Kost</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr>
-        <tr class="total"><td>Pendapatan Bruto</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr>
-      </table>
-
-      <table>
-        <tr><td>a. Gaji</td><td class="right kredit">Rp ${formatRupiah(gaji)}</td></tr>
-        <tr><td>b. Operasional Kost</td><td class="right kredit">Rp ${formatRupiah(opkost)}</td></tr>
-        <tr><td>c. Listrik & Air</td><td class="right kredit">Rp ${formatRupiah(listrik)}</td></tr>
-        <tr><td>d. Lain-lain</td><td class="right kredit">Rp ${formatRupiah(lain)}</td></tr>
-        <tr class="total"><td>Total Pengeluaran</td><td class="right kredit">Rp ${formatRupiah(keluar)}</td></tr>
-      </table>
-
-      <div class="summary-box">
-        <table style="background:transparent;box-shadow:none;">
-          <tr class="total"><td width="70%">Pendapatan Netto</td><td class="right" style="font-size:1.4em;color:#166534;">Rp ${formatRupiah(netto)}</td></tr>
-        </table>
-      </div>
-
-      <div class="section-title">SHARING BULANAN</div>
-      <table>
-        <tr><td width="70%">Promotion (5% × Bruto)</td><td class="right">Rp ${formatRupiah(promotion)}</td></tr>
-        <tr><td>Revenue (10% × Netto)</td><td class="right">Rp ${formatRupiah(revenue)}</td></tr>
-        <tr class="total"><td><strong>Total Sharing</strong></td><td class="right" style="font-size:1.3em;color:#166534;"><strong>Rp ${formatRupiah(promotion + revenue)}</strong></td></tr>
-      </table>
-
-      <div class="section-title">DETAIL TRANSAKSI</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Tanggal</th>
-            <th>Keterangan</th>
-            <th>Kategori</th>
-            <th class="right">Debet</th>
-            <th class="right">Kredit</th>
-          </tr>
-        </thead>
-        <tbody>
+  </style></head><body>
+    <div class="container">
+      <div class="header"><h1>KOSTORY</h1><div style="font-size:1.4em;opacity:0.95;">Sistem Keuangan Kost Satria</div></div>
+      <div style="padding:50px 60px;">
+        <div style="text-align:center;"><h2 class="periode">LAPORAN KEUANGAN</h2><h1 style="color:#27ae60;margin:10px 0 40px;font-size:3em;">${namaBulan.toUpperCase()} ${tahun}</h1></div>
+        <div class="section-title">RINGKASAN KEUANGAN</div>
+        <table><tr><td width="70%">Pendapatan Sewa Kost</td><td class="right debet">Rp ${formatRupiah(sewa)}</td></tr><tr class="total"><td>Pendapatan Bruto</td><td class="right debet">Rp ${formatR | formatRupiah(sewa)}</td></tr></table>
+        <table><tr><td>a. Gaji</td><td class="right kredit">Rp ${formatRupiah(gaji)}</td></tr><tr><td>b. Operasional Kost</td><td class="right kredit">Rp ${formatRupiah(opkost)}</td></tr><tr><td>c. Listrik & Air</td><td class="right kredit">Rp ${formatRupiah(listrik)}</td></tr><tr><td>d. Lain-lain</td><td class="right kredit">Rp ${formatRupiah(lain)}</td></tr><tr class="total"><td>Total Pengeluaran</td><td class="right kredit">Rp ${formatRupiah(keluar)}</td></tr></table>
+        <div class="summary-box"><table style="background:transparent;box-shadow:none;"><tr class="total"><td width="70%">Pendapatan Netto</td><td class="right" style="font-size:1.4em;color:#166534;">Rp ${formatRupiah(netto)}</td></tr></table></div>
+        <div class="section-title">SHARING BULANAN</div>
+        <table><tr><td width="70%">Promotion (5% × Bruto)</td><td class="right">Rp ${formatRupiah(promotion)}</td></tr><tr><td>Revenue (10% × Netto)</td><td class="right">Rp ${formatRupiah(revenue)}</td></tr><tr class="total"><td><strong>Total Sharing</strong></td><td class="right" style="font-size:1.3em;color:#166534;"><strong>Rp ${formatRupiah(promotion + revenue)}</strong></td></tr></table>
+        <div class="section-title">DETAIL TRANSAKSI</div>
+        <table><thead><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th class="right">Debet</th><th class="right">Kredit</th></tr></thead><tbody>
           ${trans.map(t => {
             const debet = t.tipe === 'sewa' ? `Rp ${formatRupiah(t.jumlah)}` : '-';
             const kredit = t.tipe === 'pengeluaran' ? `Rp ${formatRupiah(t.jumlah)}` : '-';
-            return `<tr>
-              <td style="font-weight:500;">${formatTanggal(t.tanggal)}</td>
-              <td>${t.keterangan}</td>
-              <td><em>${t.kategori}</em></td>
-              <td class="right ${t.tipe==='sewa'?'debet':''}">${debet}</td>
-              <td class="right ${t.tipe==='pengeluaran'?'kredit':''}">${kredit}</td>
-            </tr>`;
+            return `<tr><td style="font-weight:500;">${formatTanggal(t.tanggal)}</td><td>${t.keterangan}</td><td><em>${t.kategori}</em></td><td class="right ${t.tipe==='sewa'?'debet':''}">${debet}</td><td class="right ${t.tipe==='pengeluaran'?'kredit':''}">${kredit}</td></tr>`;
           }).join('')}
-        </tbody>
-      </table>
-
-      <div class="footer">
-        <p><strong>Dicetak pada:</strong> ${new Date().toLocaleString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'})} WIB</p>
-        <p>© 2025 KOSTORY SATRIA — Laporan Keuangan Digital</p>
+        </tbody></table>
+        <div class="footer"><p><strong>Dicetak pada:</strong> ${new Date().toLocaleString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'})} WIB</p><p>© 2025 KOSTORY SATRIA — Laporan Keuangan Digital</p></div>
       </div>
     </div>
-  </div>
-</body>
-</html>`);
+  </body></html>`);
   win.document.close();
   win.focus();
   setTimeout(() => win.print(), 1000);
