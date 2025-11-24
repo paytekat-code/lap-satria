@@ -111,7 +111,7 @@
     <h3>KOSTORY : SATRIA</h3>
     
     <div class="pilih-bulan" style="margin:20px 0;">
-      <select id="jenisLaporan" style="padding:10px;font-size:1em;border-radius:8px;">
+      <select id="jenisLaporan">
         <option value="bulanan">Laporan Bulanan</option>
         <option value="tahunan">Laporan Tahunan</option>
       </select>
@@ -123,18 +123,25 @@
       <select id="pilihTahun"></select>
     </div>
 
-    <h3 id="periodeTampil" style="margin:20px 0;color:#27ae60;font-size:1.6em;"></h3>
+    <!-- Judul periode dinamis (tidak ada tulisan statis lagi) -->
+    <h3 id="periodeTampil" style="margin:20px 0;color:#27ae60;font-size:1.8em;text-align:center;"></h3>
     
     <div id="printArea">
       <h2 style="color:#27ae60;">Pendapatan</h2>
-      <table><tr><td>Sewa Kost</td><td style="text-align:right" id="totalSewa">0</td></tr>
-      <tr class="total"><td>Pendapatan Bruto</td><td style="text-align:right" id="bruto">0</td></tr></table>
+      <table>
+        <tr><td>Sewa Kost</td><td style="text-align:right" id="totalSewa">0</td></tr>
+        <tr class="total"><td>Pendapatan Bruto</td><td style="text-align:right" id="bruto">0</td></tr>
+      </table>
       
       <h2 style="color:#27ae60;">Operasional</h2>
       <table id="detailOperasional"></table>
-      <table><tr class="total"><td>Total Pengeluaran</td><td style="text-align:right" id="totalKeluar">0</td></tr></table>
+      <table>
+        <tr class="total"><td>Total Pengeluaran</td><td style="text-align:right" id="totalKeluar">0</td></tr>
+      </table>
       
-      <table><tr class="total"><td>Pendapatan Netto</td><td style="text-align:right" id="netto">0</td></tr></table>
+      <table>
+        <tr class="total"><td>Pendapatan Netto</td><td style="text-align:right" id="netto">0</td></tr>
+      </table>
       
       <h2 style="color:#27ae60;">Sharing</h2>
       <table>
@@ -312,7 +319,7 @@ function hapusTransaksi(){
   if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
 }
 
-// === FITUR BARU: BULANAN / TAHUNAN ===
+// === LAPORAN BULANAN / TAHUNAN (SUDAH DIPERBAIKI) ===
 function isiDropdownBulanTahun(){
   const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   const bulanSelect=document.getElementById('pilihBulan');
@@ -324,14 +331,12 @@ function isiDropdownBulanTahun(){
   const tahunList=[...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
   const sekarang=new Date();
   
-  // Isi tahun
   tahunList.forEach(y=>{
     const o=document.createElement('option');o.value=y;o.text=y;
     if(y===sekarang.getFullYear()) o.selected=true;
     tahunSelect.add(o);
   });
   
-  // Bulan hanya muncul jika laporan bulanan
   if(jenis==='bulanan'){
     document.getElementById('wrapperBulan').style.display='inline';
     for(let i=0;i<12;i++){
@@ -352,9 +357,10 @@ function hitungLaporan(){
   const bulan = jenis==='bulanan' ? parseInt(document.getElementById('pilihBulan').value) : null;
   
   const namaBulan = jenis==='bulanan' ? document.getElementById('pilihBulan').options[document.getElementById('pilihBulan').selectedIndex].text.toUpperCase() : '';
-  const title = jenis==='tahunan' ? `LAPORAN TAHUNAN ${tahun}` : `${namaBulan} ${tahun}`;
+  const judulPeriode = jenis==='tahunan' ? `LAPORAN TAHUNAN ${tahun}` : `${namaBulan} ${tahun}`;
   
-  document.getElementById('periodeTampil').innerText = title;
+  // Tampilkan judul periode secara dinamis (tidak ada teks statis)
+  document.getElementById('periodeTampil').innerText = judulPeriode;
   
   let sewa=0,gaji=0,opkost=0,listrik=0,lain=0;
   
@@ -393,7 +399,7 @@ function hitungLaporan(){
   document.getElementById('totalSharing').innerText=formatRupiah(promotion+revenue);
 }
 
-// Event listener untuk perubahan jenis laporan
+// Event listener agar langsung update saat ganti pilihan
 document.getElementById('jenisLaporan').addEventListener('change', hitungLaporan);
 document.getElementById('pilihBulan').addEventListener('change', hitungLaporan);
 document.getElementById('pilihTahun').addEventListener('change', hitungLaporan);
@@ -452,9 +458,9 @@ function cetakLaporanBulanan(){
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0; background: #f8fafc; color: #1e293b; }
     .container { max-width: 900px; margin: 40px auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
-    .header { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 40px 30px; text-align: center; position: relative; }
+    .header { background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; padding: 40px 30px; text-align: center; }
     h1 { font-size: 2.8em; margin: 10px 0; font-weight: 700; }
-    .periode { font-size: 2.2em; margin: 30px 0 40px; font-weight: 600; color:#27ae60; }
+    .periode { font-size: 2.5em; margin: 30px 0 40px; color:#27ae60; font-weight:600; }
     .section-title { font-size: 1.6em; color: #27ae60; margin: 45px 0 25px; font-weight: 700; position: relative; padding-bottom: 12px; }
     .section-title::after { content: ''; position: absolute; left: 0; bottom: 0; width: 70px; height: 4px; background: #27ae60; border-radius: 2px; }
     table { width: 100%; border-collapse: collapse; margin: 20px 0; background: #f8fafc; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
