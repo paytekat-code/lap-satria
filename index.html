@@ -123,7 +123,6 @@
       <select id="pilihTahun"></select>
     </div>
 
-    <!-- Judul periode dinamis (tidak ada tulisan statis lagi) -->
     <h3 id="periodeTampil" style="margin:20px 0;color:#27ae60;font-size:1.8em;text-align:center;"></h3>
     
     <div id="printArea">
@@ -319,88 +318,105 @@ function hapusTransaksi(){
   if(confirm('Hapus transaksi ini?')) transRef.child(editId).remove().then(()=>{document.getElementById('editModal').style.display='none';alert('Terhapus!');});
 }
 
-// === LAPORAN BULANAN / TAHUNAN (SUDAH DIPERBAIKI) ===
-function isiDropdownBulanTahun(){
-  const bulanNama=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  const bulanSelect=document.getElementById('pilihBulan');
-  const tahunSelect=document.getElementById('pilihTahun');
+// === PERBAIKAN: Pilihan Bulan ===
+function refreshDropdowns() {
+  const bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const bulanSelect = document.getElementById('pilihBulan');
+  const tahunSelect = document.getElementById('pilihTahun');
   const jenis = document.getElementById('jenisLaporan').value;
-  
-  bulanSelect.innerHTML=''; tahunSelect.innerHTML='';
-  
-  const tahunList=[...new Set(data.map(t=>new Date(t.tanggal).getFullYear()))].sort((a,b)=>b-a);
-  const sekarang=new Date();
-  
-  tahunList.forEach(y=>{
-    const o=document.createElement('option');o.value=y;o.text=y;
-    if(y===sekarang.getFullYear()) o.selected=true;
+
+  bulanSelect.innerHTML = '';
+  tahunSelect.innerHTML = '';
+
+  const tahunList = [...new Set(data.map(t => new Date(t.tanggal).getFullYear()))].sort((a, b) => b - a);
+  const sekarang = new Date();
+  const tahunSekarang = sekarang.getFullYear();
+  const bulanSekarang = sekarang.getMonth();
+
+  if (tahunList.length === 0) {
+    const o = document.createElement('option');
+    o.value = tahunSekarang;
+    o.text = tahunSekarang;
+    o.selected = true;
     tahunSelect.add(o);
-  });
-  
-  if(jenis==='bulanan'){
-    document.getElementById('wrapperBulan').style.display='inline';
-    for(let i=0;i<12;i++){
-      const o=document.createElement('option');o.value=i;o.text=bulanNama[i];
-      if(i===sekarang.getMonth()) o.selected=true;
+  } else {
+    tahunList.forEach(y => {
+      const o = document.createElement('option');
+      o.value = y;
+      o.text = y;
+      if (y === tahunSekarang) o.selected = true;
+      tahunSelect.add(o);
+    });
+  }
+
+  if (jenis === 'bulanan') {
+    document.getElementById('wrapperBulan').style.display = 'inline';
+    for (let i = 0; i < 12; i++) {
+      const o = document.createElement('option');
+      o.value = i;
+      o.text = bulanNama[i];
+      if (i === bulanSekarang) o.selected = true;
       bulanSelect.add(o);
     }
   } else {
-    document.getElementById('wrapperBulan').style.display='none';
+    document.getElementById('wrapperBulan').style.display = 'none';
   }
 }
 
-function hitungLaporan(){
-  isiDropdownBulanTahun();
-  
+function hitungLaporan() {
+  refreshDropdowns();
+
   const jenis = document.getElementById('jenisLaporan').value;
   const tahun = parseInt(document.getElementById('pilihTahun').value);
-  const bulan = jenis==='bulanan' ? parseInt(document.getElementById('pilihBulan').value) : null;
-  
-  const namaBulan = jenis==='bulanan' ? document.getElementById('pilihBulan').options[document.getElementById('pilihBulan').selectedIndex].text.toUpperCase() : '';
-  const judulPeriode = jenis==='tahunan' ? `LAPORAN TAHUNAN ${tahun}` : `${namaBulan} ${tahun}`;
-  
-  // Tampilkan judul periode secara dinamis (tidak ada teks statis)
+  const bulan = jenis === 'bulanan' ? parseInt(document.getElementById('pilihBulan').value) : null;
+
+  const namaBulan = jenis === 'bulanan' ? document.getElementById('pilihBulan').options[document.getElementById('pilihBulan').selectedIndex].text.toUpperCase() : '';
+  const judulPeriode = jenis === 'tahunan' ? `LAPORAN TAHUNAN ${tahun}` : `${namaBulan} ${tahun}`;
+
   document.getElementById('periodeTampil').innerText = judulPeriode;
-  
-  let sewa=0,gaji=0,opkost=0,listrik=0,lain=0;
-  
-  data.forEach(t=>{
+
+  let sewa = 0, gaji = 0, opkost = 0, listrik = 0, lain = 0;
+
+  data.forEach(t => {
     const d = new Date(t.tanggal);
-    const matchTahun = d.getFullYear()===tahun;
-    const matchBulan = bulan===null || d.getMonth()===bulan;
-    
-    if(matchTahun && matchBulan){
-      if(t.tipe==='sewa') sewa+=t.jumlah;
-      else{
-        if(t.kategori==='Gaji') gaji+=t.jumlah;
-        if(t.kategori==='Operasional Kost') opkost+=t.jumlah;
-        if(t.kategori==='Listrik & Air') listrik+=t.jumlah;
-        if(t.kategori==='Lain-lain') lain+=t.jumlah;
+    const matchTahun = d.getFullYear() === tahun;
+    const matchBulan = bulan === null || d.getMonth() === bulan;
+
+    if (matchTahun && matchBulan) {
+      if (t.tipe === 'sewa') sewa += t.jumlah;
+      else {
+        if (t.kategori === 'Gaji') gaji += t.jumlah;
+        if (t.kategori === 'Operasional Kost') opkost += t.jumlah;
+        if (t.kategori === 'Listrik & Air') listrik += t.jumlah;
+        if (t.kategori === 'Lain-lain') lain += t.jumlah;
       }
     }
   });
-  
-  const keluar=gaji+opkost+listrik+lain;
-  const netto=sewa-keluar;
-  const promotion=sewa*0.05;
-  const revenue=netto<0?0:netto*0.10;
-  
-  document.getElementById('totalSewa').innerText=formatRupiah(sewa);
-  document.getElementById('bruto').innerText=formatRupiah(sewa);
-  document.getElementById('detailOperasional').innerHTML=`
+
+  const keluar = gaji + opkost + listrik + lain;
+  const netto = sewa - keluar;
+  const promotion = sewa * 0.05;
+  const revenue = netto < 0 ? 0 : netto * 0.10;
+
+  document.getElementById('totalSewa').innerText = formatRupiah(sewa);
+  document.getElementById('bruto').innerText = formatRupiah(sewa);
+  document.getElementById('detailOperasional').innerHTML = `
     <tr><td>a. Gaji</td><td style="text-align:right">${formatRupiah(gaji)}</td></tr>
     <tr><td>b. Operasional Kost</td><td style="text-align:right">${formatRupiah(opkost)}</td></tr>
     <tr><td>c. Listrik & Air</td><td style="text-align:right">${formatRupiah(listrik)}</td></tr>
     <tr><td>d. Lain-lain</td><td style="text-align:right">${formatRupiah(lain)}</td></tr>`;
-  document.getElementById('totalKeluar').innerText=formatRupiah(keluar);
-  document.getElementById('netto').innerText=formatRupiah(netto);
-  document.getElementById('promotion').innerText=formatRupiah(promotion);
-  document.getElementById('revenue').innerText=formatRupiah(revenue);
-  document.getElementById('totalSharing').innerText=formatRupiah(promotion+revenue);
+  document.getElementById('totalKeluar').innerText = formatRupiah(keluar);
+  document.getElementById('netto').innerText = formatRupiah(netto);
+  document.getElementById('promotion').innerText = formatRupiah(promotion);
+  document.getElementById('revenue').innerText = formatRupiah(revenue);
+  document.getElementById('totalSharing').innerText = formatRupiah(promotion + revenue);
 }
 
-// Event listener agar langsung update saat ganti pilihan
-document.getElementById('jenisLaporan').addEventListener('change', hitungLaporan);
+// Event listener
+document.getElementById('jenisLaporan').addEventListener('change', () => {
+  refreshDropdowns();
+  hitungLaporan();
+});
 document.getElementById('pilihBulan').addEventListener('change', hitungLaporan);
 document.getElementById('pilihTahun').addEventListener('change', hitungLaporan);
 
